@@ -16,10 +16,15 @@ import { GroupCreationTracker } from '@/util/group-creation-tracker'
 import { generateMatcherRegex } from '@/util/matcher-regex'
 import { GroupConfiguration } from '@/util/types'
 import { when } from '@/util/when'
+import { colors } from '@/util/resources'
 
 ignoreChromeRuntimeEvents.value = true
 
 const groupConfigurations = useGroupConfigurations()
+
+// CHANGES START HERE
+const transientGroupConfigurations = ref<GroupConfiguration[]>([])  // Domain groups generated on the fly
+// CHANGES END HERE
 
 const chromeState = useChromeState()
 
@@ -43,8 +48,29 @@ const chromeTabsByGroupConfiguration = computed(() => {
   const tabs = chromeState.tabs.items.value
 
   for (const tab of tabs) {
-    const group = getGroupConfigurationForTab(tab)
+    let group = getGroupConfigurationForTab(tab)
     if (!group) continue
+
+    // CHANGES START HERE
+    if (group.title === '%%domain%%') { // Automatically group tabs by domain
+        const domain = tab.url ? new URL(tab.url).hostname : ''
+        const domainGroup = transientGroupConfigurations.value.find(
+            group => group.title === domain
+        )
+        if (!domainGroup){
+            group = {
+                id: domain,
+                title: domain,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                matchers: [],
+                options: { strict: true, merge: true }
+            }
+            transientGroupConfigurations.value.push(group)
+        } else {
+            group = domainGroup
+        }
+    }
+    // CHANGES END HERE
 
     if (tabsByGroups.has(group)) {
       tabsByGroups.get(group)!.push(tab)
@@ -66,8 +92,29 @@ const chromeTabsByWindowIdAndGroupConfiguration = computed(() =>
       const tabsByGroups = new Map<GroupConfiguration, chrome.tabs.Tab[]>()
 
       for (const tab of tabs) {
-        const group = getGroupConfigurationForTab(tab)
+        let group = getGroupConfigurationForTab(tab)
         if (!group) continue
+
+        // CHANGES START HERE
+        if (group.title === '%%domain%%') { // Automatically group tabs by domain
+            const domain = tab.url ? new URL(tab.url).hostname : ''
+            const domainGroup = transientGroupConfigurations.value.find(
+                group => group.title === domain
+            )
+            if (!domainGroup){
+                group = {
+                    id: domain,
+                    title: domain,
+                    color: 'cyan',
+                    matchers: [],
+                    options: { strict: true, merge: true }
+                }
+                transientGroupConfigurations.value.push(group)
+            } else {
+                group = domainGroup
+            }
+        }
+        // CHANGES END HERE
 
         if (tabsByGroups.has(group)) {
           tabsByGroups.get(group)!.push(tab)
