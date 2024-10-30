@@ -17,7 +17,7 @@ test.use({
 })
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('http://localhost:6655/?context=options')
+  await page.goto('http://localhost:16655/?context=options')
 
   // Define groups programmatically
   await page.evaluate(setGroups, [

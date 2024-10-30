@@ -11,7 +11,7 @@ test.use({
 })
 
 test('Test group creation flow', async ({ page }) => {
-  await page.goto('http://localhost:6655/?context=options')
+  await page.goto('http://localhost:16655/?context=options')
 
   // Find "+" button and click it
   await page.locator('text=add').click()

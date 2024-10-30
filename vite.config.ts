@@ -26,7 +26,7 @@ export default defineConfig({
   // Code that is copied directly to the extension directory
   publicDir: 'static',
   root: resolve('src'),
-  server: { port: 6655 },
+  server: { port: 16655 },
   build: {
     assetsDir: '.',
     outDir: '../extension',

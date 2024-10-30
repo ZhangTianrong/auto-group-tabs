@@ -28,7 +28,7 @@ The fastest way to tinker with the heart of this extension — its options page 
 npm run dev
 ```
 
-This will start up the Vite dev server and serve the options page on [localhost:6655](http://localhost:6655/). Having the options page directly in the browser allows for comfort features like hot module reloading to be usable during development.
+This will start up the Vite dev server and serve the options page on [localhost:16655](http://localhost:16655/). Having the options page directly in the browser allows for comfort features like hot module reloading to be usable during development.
 
 In this mode, Chrome extension APIs accessed during production (e.g. `chrome.i18n` and `chrome.storage`) use browser-based fallbacks.
 
