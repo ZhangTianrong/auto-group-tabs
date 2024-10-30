@@ -23,7 +23,7 @@ rules:
   indent: off
   linebreak-style:
     - error
-    - unix
+    - windows
   quotes:
     - error
     - single
