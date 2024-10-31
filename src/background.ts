@@ -43,6 +43,15 @@ const augmentedGroupConfigurations = computed(() =>
   }))
 )
 
+const getColorFromKey = (key: string) => {
+    const hash = Array.from(key).reduce((acc, char) => {
+      return char.charCodeAt(0) + ((acc << 5) - acc)
+    }, 0)
+  
+    return colors[Math.abs(hash) % colors.length];
+}
+
+
 const chromeTabsByGroupConfiguration = computed(() => {
   const tabsByGroups = new Map<GroupConfiguration, chrome.tabs.Tab[]>()
   const tabs = chromeState.tabs.items.value
@@ -61,12 +70,12 @@ const chromeTabsByGroupConfiguration = computed(() => {
             group = {
                 id: domain,
                 title: domain,
-                color: colors[Math.floor(Math.random() * colors.length)],
+                color: getColorFromKey(domain),
                 matchers: [],
                 options: { strict: true, merge: true }
             }
             transientGroupConfigurations.value.push(group)
-        } else {
+        } else if (domain) {
             group = domainGroup
         }
     }
@@ -105,12 +114,12 @@ const chromeTabsByWindowIdAndGroupConfiguration = computed(() =>
                 group = {
                     id: domain,
                     title: domain,
-                    color: 'cyan',
+                    color: getColorFromKey(domain),
                     matchers: [],
                     options: { strict: true, merge: true }
                 }
                 transientGroupConfigurations.value.push(group)
-            } else {
+            } else if (domain) {
                 group = domainGroup
             }
         }
