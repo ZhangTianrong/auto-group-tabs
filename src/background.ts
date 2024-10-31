@@ -58,6 +58,13 @@ const chromeTabsByGroupConfiguration = computed(() => {
 
   for (const tab of tabs) {
     let group = getGroupConfigurationForTab(tab)
+
+    // CHANGES START HERE
+    if (group && group.title === '%%ignore%%') { // Used with %%domain%% to ignore certain domains
+        continue
+    }
+    // CHANGES END HERE
+
     if (!group) continue
 
     // CHANGES START HERE
@@ -102,6 +109,13 @@ const chromeTabsByWindowIdAndGroupConfiguration = computed(() =>
 
       for (const tab of tabs) {
         let group = getGroupConfigurationForTab(tab)
+
+        // CHANGES START HERE
+        if (group && group.title === '%%ignore%%') { // Used with %%domain%% to ignore certain domains
+            continue
+        }
+        // CHANGES END HERE
+
         if (!group) continue
 
         // CHANGES START HERE
