@@ -117,6 +117,20 @@ onMounted(() => {
   .mdc-select--filled:not(.mdc-select--activated) .mdc-select__anchor {
     border-radius: var(--mdc-shape-small, 4px);
   }
+
+  @media (forced-colors: active) {
+    .mdc-select__anchor {
+      border: 1px solid currentColor;
+      background-color: Canvas;
+      color: CanvasText;
+    }
+    .mdc-select__dropdown-icon {
+      color: CanvasText;
+    }
+    .mdc-floating-label {
+      color: CanvasText;
+    }
+  }
   `)
   const selectElement: any = selectRef.value
   selectElement.shadowRoot.adoptedStyleSheets.push(sheet)
@@ -135,5 +149,13 @@ onMounted(() => {
 
 mwc-select {
   width: 100%;
+}
+
+:global(mwc-select::part(select)) {
+  @media (forced-colors: active) {
+    border: 1px solid currentColor;
+    background-color: Canvas;
+    color: CanvasText;
+  }
 }
 </style>
