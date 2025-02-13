@@ -702,6 +702,36 @@ when(groupConfigurations.loaded).then(async () => {
         )
 
         console.debug('Reflected tab group removal in extension state')
+
+        // CHANGES START HERE
+        // Check if the removed group was created by a transient configuration
+        const removedGroup = removedTabGroups.history.value[0].snapshot
+        const transientConfig = transientGroupConfigurations.value.find(
+          config => config.title === removedGroup?.title && config.color === removedGroup?.color
+        )
+        
+        if (transientConfig) {
+          if (!transientConfig.options.merge) {
+            // For non-merge rules, we can remove immediately since cross-window groups aren't allowed
+            transientGroupConfigurations.value = transientGroupConfigurations.value.filter(
+              config => config !== transientConfig
+            )
+            console.debug('Removed transient configuration:', transientConfig.title)
+          } else {
+            // For merge rules, check if any tab groups still exist using this configuration
+            const hasRemainingGroups = chromeState.tabGroups.items.value.some(
+              group => group.title === transientConfig.title && group.color === transientConfig.color
+            )
+            
+            if (!hasRemainingGroups) {
+              transientGroupConfigurations.value = transientGroupConfigurations.value.filter(
+                config => config !== transientConfig
+              )
+              console.debug('Removed transient configuration:', transientConfig.title)
+            }
+          }
+        }
+        // CHANGES END HERE
       }
     }
 
