@@ -48,7 +48,7 @@ const getColorFromKey = (key: string) => {
       return char.charCodeAt(0) + ((acc << 5) - acc)
     }, 0)
   
-    return colors[Math.abs(hash) % colors.length];
+    return colors[Math.abs(hash) % colors.length]
 }
 
 
