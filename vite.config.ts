@@ -9,7 +9,7 @@ export default defineConfig({
   resolve: {
     alias: {
       // Ensure that all parties import the exact same Vue build
-      vue: require.resolve('vue/dist/vue.runtime.esm-bundler.js'),
+      vue: 'vue/dist/vue.runtime.esm-bundler.js',
       '@': resolve(__dirname, 'src')
     }
   },
