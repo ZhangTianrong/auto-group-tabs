@@ -59,15 +59,14 @@ const chromeTabsByGroupConfiguration = computed(() => {
   for (const tab of tabs) {
     let group = getGroupConfigurationForTab(tab)
 
-    // CHANGES START HERE
-    if (group && group.title === '%%ignore%%') { // Used with %%domain%% to ignore certain domains
-        continue
-    }
-    // CHANGES END HERE
-
     if (!group) continue
 
     // CHANGES START HERE
+    if (group.title === '%%ignore%%') { // Used with %%domain%% to ignore certain domains
+        console.debug('Ignored tab %o (%o) due to explicit %%ignore%% configuration', tab.title, tab.id)
+        continue
+    }
+
     if (group.title === '%%domain%%') { // Automatically group tabs by domain
         const domain = tab.url ? new URL(tab.url).hostname : ''
         const domainGroup = transientGroupConfigurations.value.find(
@@ -82,6 +81,7 @@ const chromeTabsByGroupConfiguration = computed(() => {
                 options: { strict: true, merge: true }
             }
             transientGroupConfigurations.value.push(group)
+            console.debug('Added transient configuration:', group.title)
         } else if (domain) {
             group = domainGroup
         }
@@ -110,15 +110,14 @@ const chromeTabsByWindowIdAndGroupConfiguration = computed(() =>
       for (const tab of tabs) {
         let group = getGroupConfigurationForTab(tab)
 
-        // CHANGES START HERE
-        if (group && group.title === '%%ignore%%') { // Used with %%domain%% to ignore certain domains
-            continue
-        }
-        // CHANGES END HERE
-
         if (!group) continue
 
         // CHANGES START HERE
+        if (group.title === '%%ignore%%') { // Used with %%domain%% to ignore certain domains
+            console.debug('Ignored tab %o (%o) due to explicit %%ignore%% configuration', tab.title, tab.id)
+            continue
+        }
+
         if (group.title === '%%domain%%') { // Automatically group tabs by domain
             const domain = tab.url ? new URL(tab.url).hostname : ''
             const domainGroup = transientGroupConfigurations.value.find(
@@ -133,6 +132,7 @@ const chromeTabsByWindowIdAndGroupConfiguration = computed(() =>
                     options: { strict: true, merge: true }
                 }
                 transientGroupConfigurations.value.push(group)
+                console.debug('Added transient configuration:', group.title)
             } else if (domain) {
                 group = domainGroup
             }
