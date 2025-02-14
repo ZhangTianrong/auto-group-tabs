@@ -18,6 +18,63 @@ import { GroupConfiguration } from '@/util/types'
 import { when } from '@/util/when'
 import { colors } from '@/util/resources'
 
+// CHANGES START HERE
+import { useCollapseStrategy } from '@/composables/use-collapse-strategy'
+
+// Debounce function with proper TypeScript typing
+function debounce<T extends (...args: any[]) => void>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: number | undefined
+  return function executedFunction(...args: Parameters<T>) {
+    const later = () => {
+      clearTimeout(timeout)
+      func(...args)
+    }
+    clearTimeout(timeout)
+    timeout = setTimeout(later, wait) as unknown as number
+  }
+}
+
+// Handle tab group collapse/expand with error handling and retries
+async function updateGroups(activeInfo: chrome.tabs.TabActiveInfo) {
+  try {
+    if (ignoreChromeRuntimeEvents.value) return
+    if (collapseStrategy.data.value === 'disabled') return
+
+    const activeTab = await chrome.tabs.get(activeInfo.tabId)
+    if (!activeTab.groupId) return
+
+    if (collapseStrategy.data.value === 'collapse_inactive') {
+      const tabGroups = chromeState.tabGroupsByWindowId.value[activeInfo.windowId] || []
+      const activeGroup = tabGroups.find(group => group.id === activeTab.groupId)
+      if (!activeGroup) return
+
+      // Only expand if currently collapsed
+      if (activeGroup.collapsed) {
+        await chrome.tabGroups.update(activeTab.groupId, { collapsed: false })
+      }
+      
+      // Only collapse other groups if they're currently expanded
+      for (const group of tabGroups) {
+        if (group.id !== activeTab.groupId && !group.collapsed) {
+          await chrome.tabGroups.update(group.id, { collapsed: true })
+        }
+      }
+    }
+  } catch (error) {
+    if (error == 'Error: Tabs cannot be edited right now (user may be dragging a tab).') {
+      setTimeout(() => updateGroups(activeInfo), 50)
+    } else {
+      console.error('Error updating tab groups:', error)
+    }
+  }
+}
+
+const debouncedUpdateGroups = debounce(updateGroups, 100)
+// CHANGES END HERE
+
 ignoreChromeRuntimeEvents.value = true
 
 const groupConfigurations = useGroupConfigurations()
@@ -27,6 +84,10 @@ const transientGroupConfigurations = ref<GroupConfiguration[]>([])  // Domain gr
 // CHANGES END HERE
 
 const chromeState = useChromeState()
+
+// CHANGES START HERE
+const collapseStrategy = useCollapseStrategy()
+// CHANGES END HERE
 
 // Augmented group configurations are group configurations with
 // enhanced functionality, e.g. matchers converted to regular expressions
@@ -766,6 +827,13 @@ when(groupConfigurations.loaded).then(async () => {
     }
   })
 })
+
+// CHANGES START HERE
+// Handle tab group collapse/expand based on active tab
+chrome.tabs.onActivated.addListener((activeInfo) => {
+  debouncedUpdateGroups(activeInfo)
+})
+// CHANGES END HERE
 
 chrome.action.onClicked.addListener(() => {
   console.debug('Trigger extension action')
