@@ -37,42 +37,42 @@ function debounce<T extends (...args: any[]) => void>(
   }
 }
 
-// Handle tab group collapse/expand with error handling and retries
-async function updateGroups(activeInfo: chrome.tabs.TabActiveInfo) {
+// Update tab group expansion/collapse states based on active tab
+async function updateGroupExpansionStatus(tabId: number, windowId: number) {
   try {
     if (ignoreChromeRuntimeEvents.value) return
     if (collapseStrategy.data.value === 'disabled') return
 
-    const activeTab = await chrome.tabs.get(activeInfo.tabId)
-    if (!activeTab.groupId) return
+    const tab = await chrome.tabs.get(tabId)
+    if (!tab.groupId) return
 
     if (collapseStrategy.data.value === 'collapse_inactive') {
-      const tabGroups = chromeState.tabGroupsByWindowId.value[activeInfo.windowId] || []
-      const activeGroup = tabGroups.find(group => group.id === activeTab.groupId)
+      const tabGroups = chromeState.tabGroupsByWindowId.value[windowId] || []
+      const activeGroup = tabGroups.find(group => group.id === tab.groupId)
       if (!activeGroup) return
 
       // Only expand if currently collapsed
       if (activeGroup.collapsed) {
-        await chrome.tabGroups.update(activeTab.groupId, { collapsed: false })
+        await chrome.tabGroups.update(tab.groupId, { collapsed: false })
       }
       
       // Only collapse other groups if they're currently expanded
       for (const group of tabGroups) {
-        if (group.id !== activeTab.groupId && !group.collapsed) {
+        if (group.id !== tab.groupId && !group.collapsed) {
           await chrome.tabGroups.update(group.id, { collapsed: true })
         }
       }
     }
   } catch (error) {
     if (error == 'Error: Tabs cannot be edited right now (user may be dragging a tab).') {
-      setTimeout(() => updateGroups(activeInfo), 50)
+      setTimeout(() => updateGroupExpansionStatus(tabId, windowId), 50)
     } else {
-      console.error('Error updating tab groups:', error)
+      console.error('Error updating tab group expansion states:', error)
     }
   }
 }
 
-const debouncedUpdateGroups = debounce(updateGroups, 100)
+const debouncedUpdateGroupExpansionStatus = debounce(updateGroupExpansionStatus, 100)
 // CHANGES END HERE
 
 ignoreChromeRuntimeEvents.value = true
@@ -361,6 +361,18 @@ async function assignTabsToGroup(
 
       tabIds.forEach(tabId => draggingTabs.delete(tabId))
       console.debug('Assignment successful')
+
+      // CHANGES START HERE
+      // Check if any of the tabs we just grouped is active
+      const activeTabPromises = tabIds.map(tabId => chrome.tabs.get(tabId))
+      const groupedTabs = await Promise.all(activeTabPromises)
+      const activeTab = groupedTabs.find(tab => tab.active)
+
+      // If we found an active tab, update group expansion states
+      if (activeTab) {
+        debouncedUpdateGroupExpansionStatus(activeTab.id!, activeTab.windowId)
+      }
+      // CHANGES END HERE
 
       return tabGroupId
     } catch (error) {
@@ -829,9 +841,9 @@ when(groupConfigurations.loaded).then(async () => {
 })
 
 // CHANGES START HERE
-// Handle tab group collapse/expand based on active tab
+// Handle tab group expansion/collapse based on active tab
 chrome.tabs.onActivated.addListener((activeInfo) => {
-  debouncedUpdateGroups(activeInfo)
+  debouncedUpdateGroupExpansionStatus(activeInfo.tabId, activeInfo.windowId)
 })
 // CHANGES END HERE
 
