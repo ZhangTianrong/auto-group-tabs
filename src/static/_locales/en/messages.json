@@ -331,9 +331,13 @@
         "message": "Create configuration for",
         "description": "Add tab group configuration button from a popup"
     },
-    "settingsMiscTitle": {
-        "message": "Misc",
-        "description": "Title of the miscellaneous settings section"
+    "settingsMiscConfigurationTitle": {
+        "message": "Misc Configuration",
+        "description": "Title of the miscellaneous configuration section"
+    },
+    "settingsMiscConfigurationSubtitle": {
+        "message": "Configure automatic group collapsing and other settings",
+        "description": "Subtitle of the miscellaneous configuration section"
     },
     "settingsCollapseStrategyTitle": {
         "message": "Automatic Group Collapsing",
