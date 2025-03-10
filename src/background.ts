@@ -20,6 +20,7 @@ import { colors } from '@/util/resources'
 
 // CHANGES START HERE
 import { useCollapseStrategy } from '@/composables/use-collapse-strategy'
+import { useExpandOnUpdate } from '@/composables/use-expand-on-update'
 
 // Debounce function with proper TypeScript typing
 function debounce<T extends (...args: any[]) => void>(
@@ -87,6 +88,7 @@ const chromeState = useChromeState()
 
 // CHANGES START HERE
 const collapseStrategy = useCollapseStrategy()
+const expandOnUpdate = useExpandOnUpdate()
 // CHANGES END HERE
 
 // Augmented group configurations are group configurations with
@@ -326,7 +328,8 @@ async function assignTabsToGroup(
 
         await chrome.tabGroups.update(newGroupId, {
           title: group.title,
-          color: group.color
+          color: group.color,
+          collapsed: expandOnUpdate.data.value !== 'enabled' // CHANGES: Expand if enabled
         })
       } else {
         // Change focus if tab has moved to another window
@@ -342,6 +345,15 @@ async function assignTabsToGroup(
           tabIds,
           groupId: tabGroupId
         })
+
+        // If expand on update is enabled, expand the group
+        if (expandOnUpdate.data.value === 'enabled') {
+          try {
+            await chrome.tabGroups.update(tabGroupId, { collapsed: false })
+          } catch (error) {
+            console.error('Error expanding tab group:', error)
+          }
+        }
 
         if (currentTabId && tabIds.includes(currentTabId)) {
           const targetWindowId = chromeState.tabGroups.items.value.find(
@@ -749,6 +761,20 @@ when(groupConfigurations.loaded).then(async () => {
     if (!update) return
     if (chromeState.tabs.detachedTabs.value.includes(update.tab.id!)) return
     if (draggingTabs.has(update.tab.id!)) return
+
+    // Check if the tab's group has actually changed
+    const groupChanged = update.changes.groupId !== undefined && 
+                      update.changes.groupId !== update.oldTab?.groupId &&
+                      update.changes.groupId !== chrome.tabGroups.TAB_GROUP_ID_NONE
+
+    // If the group has changed and expand on update is enabled, expand the group
+    if (groupChanged && expandOnUpdate.data.value === 'enabled' && update.changes.groupId) {
+      try {
+        await chrome.tabGroups.update(update.changes.groupId, { collapsed: false })
+      } catch (error) {
+        console.error('Error expanding tab group:', error)
+      }
+    }
 
     const removedFromTabGroup =
       update.changes.groupId === chrome.tabGroups.TAB_GROUP_ID_NONE

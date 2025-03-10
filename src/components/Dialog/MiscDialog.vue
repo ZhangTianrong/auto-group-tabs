@@ -18,6 +18,21 @@
           </template>
         </Text>
       </SelectCardSection>
+
+      <SelectCardSection
+        v-model="expandOnUpdate.data.value"
+        :options="[
+          { value: 'disabled', label: msg.settingsExpandOnUpdateDisabled },
+          { value: 'enabled', label: msg.settingsExpandOnUpdateEnabled }
+        ]"
+      >
+        <Text>
+          {{ msg.settingsExpandOnUpdateTitle }}
+          <template #secondary>
+            {{ msg.settingsExpandOnUpdateSubtitle }}
+          </template>
+        </Text>
+      </SelectCardSection>
     </Card>
   </OverlayDialog>
 </template>
@@ -29,12 +44,14 @@ import SelectCardSection from '@/components/Card/SelectCardSection.vue'
 import Text from '@/components/Text.vue'
 import OverlayDialog from './OverlayDialog.vue'
 import { useCollapseStrategy } from '@/composables/use-collapse-strategy'
+import { useExpandOnUpdate } from '@/composables/use-expand-on-update'
 
 const emit = defineEmits<{
   (e: 'close'): void
 }>()
 
 const collapseStrategy = useCollapseStrategy()
+const expandOnUpdate = useExpandOnUpdate()
 
 function close() {
   emit('close')

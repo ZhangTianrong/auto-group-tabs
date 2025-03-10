@@ -354,5 +354,21 @@
     "settingsCollapseStrategyInactive": {
         "message": "Collapse inactive groups",
         "description": "Option to collapse inactive groups"
+    },
+    "settingsExpandOnUpdateTitle": {
+        "message": "Expand groups on update",
+        "description": "Title of the expand on update setting"
+    },
+    "settingsExpandOnUpdateSubtitle": {
+        "message": "Automatically expand a tab group when a tab joins it",
+        "description": "Description of the expand on update setting"
+    },
+    "settingsExpandOnUpdateDisabled": {
+        "message": "Disabled",
+        "description": "Option to disable automatic group expansion"
+    },
+    "settingsExpandOnUpdateEnabled": {
+        "message": "Enabled",
+        "description": "Option to enable automatic group expansion"
     }
 }
