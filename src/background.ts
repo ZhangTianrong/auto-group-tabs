@@ -340,19 +340,26 @@ async function assignTabsToGroup(
         )?.[0]
         const currentTabId = currentTab?.id
 
-        console.debug('Attempt assignment to existing group %o', tabGroupId)
-        await chrome.tabs.group({
-          tabIds,
-          groupId: tabGroupId
-        })
+        // Check if any of the tabs are not already in this group
+        const tabsNotInGroup = tabs.filter(tab => tab.groupId !== tabGroupId)
+        
+        if (tabsNotInGroup.length > 0) {
+          console.debug('Attempt assignment to existing group %o', tabGroupId)
+          await chrome.tabs.group({
+            tabIds,
+            groupId: tabGroupId
+          })
 
-        // If expand on update is enabled, expand the group
-        if (expandOnUpdate.data.value === 'enabled') {
-          try {
-            await chrome.tabGroups.update(tabGroupId, { collapsed: false })
-          } catch (error) {
-            console.error('Error expanding tab group:', error)
+          // If expand on update is enabled, expand the group
+          if (expandOnUpdate.data.value === 'enabled') {
+            try {
+              await chrome.tabGroups.update(tabGroupId, { collapsed: false })
+            } catch (error) {
+              console.error('Error expanding tab group:', error)
+            }
           }
+        } else {
+          console.debug('All tabs already in group %o, skipping assignment', tabGroupId)
         }
 
         if (currentTabId && tabIds.includes(currentTabId)) {
