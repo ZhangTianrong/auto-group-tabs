@@ -71,7 +71,7 @@ async function updateGroupExpansionStatus(tabId: number, windowId: number) {
     ) {
       setTimeout(() => updateGroupExpansionStatus(tabId, windowId), 50)
     } else {
-      console.error('Error updating tab group expansion states:', error)
+      console.warn('Error updating tab group expansion states:', error)
     }
   }
 }
@@ -388,7 +388,7 @@ async function assignTabsToGroup(
             try {
               await chrome.tabGroups.update(tabGroupId, { collapsed: false })
             } catch (error) {
-              console.error('Error expanding tab group:', error)
+              console.warn('Error expanding tab group:', error)
             }
           }
         } else {
@@ -459,7 +459,7 @@ async function assignTabsToGroup(
           )
         }, 50)
       } else {
-        console.error('Could not group tabs:', error)
+        console.warn('Could not group tabs:', error)
       }
     }
   }
@@ -826,7 +826,7 @@ when(groupConfigurations.loaded).then(async () => {
           collapsed: false
         })
       } catch (error) {
-        console.error('Error expanding tab group:', error)
+        console.warn('Error expanding tab group:', error)
       }
     }
 
@@ -936,6 +936,30 @@ when(groupConfigurations.loaded).then(async () => {
 // Handle tab group expansion/collapse based on active tab
 chrome.tabs.onActivated.addListener(activeInfo => {
   debouncedUpdateGroupExpansionStatus(activeInfo.tabId, activeInfo.windowId)
+})
+
+// Handle the case when a tab is moved from one window to another
+chrome.tabs.onDetached.addListener(async (tabId, detachInfo) => {
+  try {
+    // Get the active tab in the original window after the tab was detached
+    const tabs = await chrome.tabs.query({
+      active: true,
+      windowId: detachInfo.oldWindowId
+    })
+
+    if (tabs.length > 0 && tabs[0].groupId && tabs[0].id !== undefined) {
+      // If the active tab belongs to a group, ensure that group is expanded
+      console.debug(
+        'Tab detached, expanding group of new active tab in original window',
+        tabs[0].id,
+        tabs[0].groupId,
+        detachInfo.oldWindowId
+      )
+      debouncedUpdateGroupExpansionStatus(tabs[0].id, detachInfo.oldWindowId)
+    }
+  } catch (error) {
+    console.warn('Error handling tab detach event:', error)
+  }
 })
 // CHANGES END HERE
 
