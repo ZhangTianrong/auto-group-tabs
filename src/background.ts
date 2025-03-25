@@ -56,7 +56,7 @@ async function updateGroupExpansionStatus(tabId: number, windowId: number) {
       if (activeGroup.collapsed) {
         await chrome.tabGroups.update(tab.groupId, { collapsed: false })
       }
-      
+
       // Only collapse other groups if they're currently expanded
       for (const group of tabGroups) {
         if (group.id !== tab.groupId && !group.collapsed) {
@@ -65,7 +65,10 @@ async function updateGroupExpansionStatus(tabId: number, windowId: number) {
       }
     }
   } catch (error) {
-    if (error == 'Error: Tabs cannot be edited right now (user may be dragging a tab).') {
+    if (
+      error ==
+      'Error: Tabs cannot be edited right now (user may be dragging a tab).'
+    ) {
       setTimeout(() => updateGroupExpansionStatus(tabId, windowId), 50)
     } else {
       console.error('Error updating tab group expansion states:', error)
@@ -73,7 +76,10 @@ async function updateGroupExpansionStatus(tabId: number, windowId: number) {
   }
 }
 
-const debouncedUpdateGroupExpansionStatus = debounce(updateGroupExpansionStatus, 100)
+const debouncedUpdateGroupExpansionStatus = debounce(
+  updateGroupExpansionStatus,
+  100
+)
 // CHANGES END HERE
 
 ignoreChromeRuntimeEvents.value = true
@@ -81,7 +87,7 @@ ignoreChromeRuntimeEvents.value = true
 const groupConfigurations = useGroupConfigurations()
 
 // CHANGES START HERE
-const transientGroupConfigurations = ref<GroupConfiguration[]>([])  // Domain groups generated on the fly
+const transientGroupConfigurations = ref<GroupConfiguration[]>([]) // Domain groups generated on the fly
 // CHANGES END HERE
 
 const chromeState = useChromeState()
@@ -107,13 +113,12 @@ const augmentedGroupConfigurations = computed(() =>
 )
 
 const getColorFromKey = (key: string) => {
-    const hash = Array.from(key).reduce((acc, char) => {
-      return char.charCodeAt(0) + ((acc << 5) - acc)
-    }, 0)
-  
-    return colors[Math.abs(hash) % colors.length]
-}
+  const hash = Array.from(key).reduce((acc, char) => {
+    return char.charCodeAt(0) + ((acc << 5) - acc)
+  }, 0)
 
+  return colors[Math.abs(hash) % colors.length]
+}
 
 const chromeTabsByGroupConfiguration = computed(() => {
   const tabsByGroups = new Map<GroupConfiguration, chrome.tabs.Tab[]>()
@@ -125,29 +130,35 @@ const chromeTabsByGroupConfiguration = computed(() => {
     if (!group) continue
 
     // CHANGES START HERE
-    if (group.title === '%%ignore%%') { // Used with %%domain%% to ignore certain domains
-        console.debug('Ignored tab %o (%o) due to explicit %%ignore%% configuration', tab.title, tab.id)
-        continue
+    if (group.title === '%%ignore%%') {
+      // Used with %%domain%% to ignore certain domains
+      console.debug(
+        'Ignored tab %o (%o) due to explicit %%ignore%% configuration',
+        tab.title,
+        tab.id
+      )
+      continue
     }
 
-    if (group.title === '%%domain%%') { // Automatically group tabs by domain
-        const domain = tab.url ? new URL(tab.url).hostname : ''
-        const domainGroup = transientGroupConfigurations.value.find(
-            group => group.title === domain
-        )
-        if (!domainGroup){
-            group = {
-                id: domain,
-                title: domain,
-                color: getColorFromKey(domain),
-                matchers: [],
-                options: { strict: true, merge: true }
-            }
-            transientGroupConfigurations.value.push(group)
-            console.debug('Added transient configuration:', group.title)
-        } else if (domain) {
-            group = domainGroup
+    if (group.title === '%%domain%%') {
+      // Automatically group tabs by domain
+      const domain = tab.url ? new URL(tab.url).hostname : ''
+      const domainGroup = transientGroupConfigurations.value.find(
+        group => group.title === domain
+      )
+      if (!domainGroup) {
+        group = {
+          id: domain,
+          title: domain,
+          color: getColorFromKey(domain),
+          matchers: [],
+          options: { strict: true, merge: true }
         }
+        transientGroupConfigurations.value.push(group)
+        console.debug('Added transient configuration:', group.title)
+      } else if (domain) {
+        group = domainGroup
+      }
     }
     // CHANGES END HERE
 
@@ -176,29 +187,35 @@ const chromeTabsByWindowIdAndGroupConfiguration = computed(() =>
         if (!group) continue
 
         // CHANGES START HERE
-        if (group.title === '%%ignore%%') { // Used with %%domain%% to ignore certain domains
-            console.debug('Ignored tab %o (%o) due to explicit %%ignore%% configuration', tab.title, tab.id)
-            continue
+        if (group.title === '%%ignore%%') {
+          // Used with %%domain%% to ignore certain domains
+          console.debug(
+            'Ignored tab %o (%o) due to explicit %%ignore%% configuration',
+            tab.title,
+            tab.id
+          )
+          continue
         }
 
-        if (group.title === '%%domain%%') { // Automatically group tabs by domain
-            const domain = tab.url ? new URL(tab.url).hostname : ''
-            const domainGroup = transientGroupConfigurations.value.find(
-                group => group.title === domain
-            )
-            if (!domainGroup){
-                group = {
-                    id: domain,
-                    title: domain,
-                    color: getColorFromKey(domain),
-                    matchers: [],
-                    options: { strict: true, merge: true }
-                }
-                transientGroupConfigurations.value.push(group)
-                console.debug('Added transient configuration:', group.title)
-            } else if (domain) {
-                group = domainGroup
+        if (group.title === '%%domain%%') {
+          // Automatically group tabs by domain
+          const domain = tab.url ? new URL(tab.url).hostname : ''
+          const domainGroup = transientGroupConfigurations.value.find(
+            group => group.title === domain
+          )
+          if (!domainGroup) {
+            group = {
+              id: domain,
+              title: domain,
+              color: getColorFromKey(domain),
+              matchers: [],
+              options: { strict: true, merge: true }
             }
+            transientGroupConfigurations.value.push(group)
+            console.debug('Added transient configuration:', group.title)
+          } else if (domain) {
+            group = domainGroup
+          }
         }
         // CHANGES END HERE
 
@@ -251,7 +268,8 @@ const groupCreationTracker = new GroupCreationTracker()
 
 async function assignTabsToGroup(
   tabs: chrome.tabs.Tab[],
-  group: GroupConfiguration
+  group: GroupConfiguration,
+  noRedundantGrouping: boolean = false
 ) {
   if (tabs.length === 0) return
 
@@ -280,6 +298,21 @@ async function assignTabsToGroup(
 
   const tabGroup = shouldMerge ? targetTabGroup : targetTabGroupInSameWindow
   const tabGroupId = tabGroup?.id
+
+  // If noRedundantGrouping is true and all tabs are already in the correct group,
+  // skip the grouping operation to preserve the current expansion state
+  if (noRedundantGrouping && tabGroupId) {
+    const allTabsAlreadyInGroup = tabs.every(tab => tab.groupId === tabGroupId)
+    if (allTabsAlreadyInGroup) {
+      console.debug(
+        'All tabs already in correct group %o (%o / %o), skipping to preserve expansion state',
+        tabGroupId,
+        group.title,
+        group.color
+      )
+      return
+    }
+  }
 
   console.debug(
     'Assigning %o tabs to group %o (%o / %o)...',
@@ -342,7 +375,7 @@ async function assignTabsToGroup(
 
         // Check if any of the tabs are not already in this group
         const tabsNotInGroup = tabs.filter(tab => tab.groupId !== tabGroupId)
-        
+
         if (tabsNotInGroup.length > 0) {
           console.debug('Attempt assignment to existing group %o', tabGroupId)
           await chrome.tabs.group({
@@ -359,7 +392,10 @@ async function assignTabsToGroup(
             }
           }
         } else {
-          console.debug('All tabs already in group %o, skipping assignment', tabGroupId)
+          console.debug(
+            'All tabs already in group %o, skipping assignment',
+            tabGroupId
+          )
         }
 
         if (currentTabId && tabIds.includes(currentTabId)) {
@@ -472,7 +508,11 @@ async function groupAllAppropriateTabs() {
         assignedTabIds.add(tab.id!)
       }
 
-      await assignTabsToGroup(tabs, group)
+      await assignTabsToGroup(
+        tabs,
+        group,
+        true // Pass noRedundantGrouping=true to preserve expansion state
+      )
     }
   }
 
@@ -770,14 +810,21 @@ when(groupConfigurations.loaded).then(async () => {
     if (draggingTabs.has(update.tab.id!)) return
 
     // Check if the tab's group has actually changed
-    const groupChanged = update.changes.groupId !== undefined && 
-                      update.changes.groupId !== update.oldTab?.groupId &&
-                      update.changes.groupId !== chrome.tabGroups.TAB_GROUP_ID_NONE
+    const groupChanged =
+      update.changes.groupId !== undefined &&
+      update.changes.groupId !== update.oldTab?.groupId &&
+      update.changes.groupId !== chrome.tabGroups.TAB_GROUP_ID_NONE
 
     // If the group has changed and expand on update is enabled, expand the group
-    if (groupChanged && expandOnUpdate.data.value === 'enabled' && update.changes.groupId) {
+    if (
+      groupChanged &&
+      expandOnUpdate.data.value === 'enabled' &&
+      update.changes.groupId
+    ) {
       try {
-        await chrome.tabGroups.update(update.changes.groupId, { collapsed: false })
+        await chrome.tabGroups.update(update.changes.groupId, {
+          collapsed: false
+        })
       } catch (error) {
         console.error('Error expanding tab group:', error)
       }
@@ -813,27 +860,39 @@ when(groupConfigurations.loaded).then(async () => {
         // Check if the removed group was created by a transient configuration
         const removedGroup = removedTabGroups.history.value[0].snapshot
         const transientConfig = transientGroupConfigurations.value.find(
-          config => config.title === removedGroup?.title && config.color === removedGroup?.color
+          config =>
+            config.title === removedGroup?.title &&
+            config.color === removedGroup?.color
         )
-        
+
         if (transientConfig) {
           if (!transientConfig.options.merge) {
             // For non-merge rules, we can remove immediately since cross-window groups aren't allowed
-            transientGroupConfigurations.value = transientGroupConfigurations.value.filter(
-              config => config !== transientConfig
+            transientGroupConfigurations.value =
+              transientGroupConfigurations.value.filter(
+                config => config !== transientConfig
+              )
+            console.debug(
+              'Removed transient configuration:',
+              transientConfig.title
             )
-            console.debug('Removed transient configuration:', transientConfig.title)
           } else {
             // For merge rules, check if any tab groups still exist using this configuration
             const hasRemainingGroups = chromeState.tabGroups.items.value.some(
-              group => group.title === transientConfig.title && group.color === transientConfig.color
+              group =>
+                group.title === transientConfig.title &&
+                group.color === transientConfig.color
             )
-            
+
             if (!hasRemainingGroups) {
-              transientGroupConfigurations.value = transientGroupConfigurations.value.filter(
-                config => config !== transientConfig
+              transientGroupConfigurations.value =
+                transientGroupConfigurations.value.filter(
+                  config => config !== transientConfig
+                )
+              console.debug(
+                'Removed transient configuration:',
+                transientConfig.title
               )
-              console.debug('Removed transient configuration:', transientConfig.title)
             }
           }
         }
@@ -875,7 +934,7 @@ when(groupConfigurations.loaded).then(async () => {
 
 // CHANGES START HERE
 // Handle tab group expansion/collapse based on active tab
-chrome.tabs.onActivated.addListener((activeInfo) => {
+chrome.tabs.onActivated.addListener(activeInfo => {
   debouncedUpdateGroupExpansionStatus(activeInfo.tabId, activeInfo.windowId)
 })
 // CHANGES END HERE
