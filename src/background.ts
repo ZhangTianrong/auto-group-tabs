@@ -785,17 +785,6 @@ watch(chromeState.tabGroups.lastUpdated, async tabGroup => {
   }
 })
 
-// Update timestamp when extension wakes up
-chrome.runtime.onStartup.addListener(() => {
-  lastWakeTimestamp.value = Date.now()
-  console.debug('Extension startup detected, setting grace period timestamp')
-})
-
-chrome.runtime.onSuspendCanceled.addListener(() => {
-  lastWakeTimestamp.value = Date.now()
-  console.debug('Extension suspend canceled, setting grace period timestamp')
-})
-
 // Reload the runtime on update to avoid sticking to outdated behavior in existing tabs
 chrome.runtime.onUpdateAvailable.addListener(() => {
   chrome.runtime.reload()
