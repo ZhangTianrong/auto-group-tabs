@@ -19,6 +19,9 @@ import { when } from '@/util/when'
 import { colors } from '@/util/resources'
 
 // CHANGES START HERE
+const startupGracePeriod = 500 // Milliseconds to allow manual expansion after wake
+const lastWakeTimestamp = ref(Date.now()) // Using ref for reactivity
+
 import { useCollapseStrategy } from '@/composables/use-collapse-strategy'
 import { useExpandOnUpdate } from '@/composables/use-expand-on-update'
 
@@ -60,6 +63,11 @@ async function updateGroupExpansionStatus(tabId: number, windowId: number) {
       // Only collapse other groups if they're currently expanded
       for (const group of tabGroups) {
         if (group.id !== tab.groupId && !group.collapsed) {
+          // Skip collapsing during wake-up grace period
+          if (Date.now() - lastWakeTimestamp.value < startupGracePeriod) {
+            console.debug('Skipping collapse during wake-up grace period')
+            continue
+          }
           await chrome.tabGroups.update(group.id, { collapsed: true })
         }
       }
@@ -775,6 +783,17 @@ watch(chromeState.tabGroups.lastUpdated, async tabGroup => {
       programmaticallyUpdatingTabGroups.value = false
     }
   }
+})
+
+// Update timestamp when extension wakes up
+chrome.runtime.onStartup.addListener(() => {
+  lastWakeTimestamp.value = Date.now()
+  console.debug('Extension startup detected, setting grace period timestamp')
+})
+
+chrome.runtime.onSuspendCanceled.addListener(() => {
+  lastWakeTimestamp.value = Date.now()
+  console.debug('Extension suspend canceled, setting grace period timestamp')
 })
 
 // Reload the runtime on update to avoid sticking to outdated behavior in existing tabs
