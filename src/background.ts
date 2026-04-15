@@ -5,7 +5,8 @@ import {
   tickResetRef,
   useGroupConfigurations,
   ignoreChromeRuntimeEvents,
-  useChromeState
+  useChromeState,
+  useRuntimeReadMode
 } from '@/composables'
 import * as conflictManager from '@/util/conflict-manager'
 import {
@@ -14,6 +15,13 @@ import {
 } from '@/util/group-configurations'
 import { GroupCreationTracker } from '@/util/group-creation-tracker'
 import { generateMatcherRegex } from '@/util/matcher-regex'
+import {
+  findMatchingTabGroup,
+  getFreshTab,
+  runWithGroupMutationLock,
+  verifyAssignment
+} from '@/util/runtime-consistency'
+import { createManualGroupToggleTracker } from '@/util/manual-group-toggle-tracker'
 import { GroupConfiguration } from '@/util/types'
 import { when } from '@/util/when'
 import { colors } from '@/util/resources'
@@ -25,50 +33,160 @@ const lastWakeTimestamp = ref(Date.now()) // Using ref for reactivity
 import { useCollapseStrategy } from '@/composables/use-collapse-strategy'
 import { useExpandOnUpdate } from '@/composables/use-expand-on-update'
 
-// Debounce function with proper TypeScript typing
-function debounce<T extends (...args: any[]) => void>(
-  func: T,
-  wait: number
-): (...args: Parameters<T>) => void {
-  let timeout: number | undefined
-  return function executedFunction(...args: Parameters<T>) {
-    const later = () => {
-      clearTimeout(timeout)
-      func(...args)
-    }
-    clearTimeout(timeout)
-    timeout = setTimeout(later, wait) as unknown as number
+function sleep(ms: number) {
+  return new Promise(resolve => {
+    setTimeout(resolve, ms)
+  })
+}
+
+const expansionUpdateSequenceByWindowId = new Map<number, number>()
+const expansionDebounceTimersByWindowId = new Map<number, number>()
+const expansionConvergenceDelaysMs = [300, 900, 1800, 3000]
+const manualGroupToggleTracker = createManualGroupToggleTracker()
+
+async function getWindowTabGroups(windowId: number) {
+  if (runtimeReadMode.data.value === 'cache_only') {
+    return chromeState.tabGroupsByWindowId.value[windowId] || []
+  }
+
+  try {
+    return await chrome.tabGroups.query({ windowId })
+  } catch {
+    return chromeState.tabGroupsByWindowId.value[windowId] || []
   }
 }
 
+async function resolveActiveGroupedTab(tabId: number, windowId: number) {
+  const runtimeMode = runtimeReadMode.data.value
+  const noneGroupId = chrome.tabGroups.TAB_GROUP_ID_NONE
+
+  const resolvedTab = await getFreshTab(tabId, runtimeMode, {
+    cacheTabsById: chromeState.tabsById.value
+  })
+
+  if (
+    resolvedTab &&
+    resolvedTab.windowId === windowId &&
+    resolvedTab.active &&
+    resolvedTab.groupId !== noneGroupId
+  ) {
+    return resolvedTab
+  }
+
+  const activeTab = (
+    await chrome.tabs.query({
+      active: true,
+      windowId
+    })
+  )?.[0]
+
+  if (activeTab && activeTab.groupId !== noneGroupId) {
+    return activeTab
+  }
+
+  // Edge can reflect activation/group linkage slightly late.
+  await sleep(35)
+
+  const retriedActiveTab = (
+    await chrome.tabs.query({
+      active: true,
+      windowId
+    })
+  )?.[0]
+
+  if (retriedActiveTab && retriedActiveTab.groupId !== noneGroupId) {
+    return retriedActiveTab
+  }
+
+  return
+}
+
+async function updateCollapsedStateWithRetry(
+  groupId: number,
+  collapsed: boolean,
+  windowId: number,
+  isStaleCall: () => boolean,
+  retries: number = 3
+) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    if (isStaleCall()) return false
+
+    manualGroupToggleTracker.recordProgrammaticToggle(groupId, collapsed)
+    await chrome.tabGroups.update(groupId, { collapsed })
+
+    const refreshedGroup = (await getWindowTabGroups(windowId)).find(
+      group => group.id === groupId
+    )
+    if (refreshedGroup?.collapsed === collapsed) {
+      return true
+    }
+
+    if (attempt < retries) {
+      await sleep(35)
+    }
+  }
+
+  return false
+}
+
 // Update tab group expansion/collapse states based on active tab
-async function updateGroupExpansionStatus(tabId: number, windowId: number) {
+async function updateGroupExpansionStatus(
+  tabId: number,
+  windowId: number,
+  sequence: number
+) {
+  const isStaleCall = () =>
+    expansionUpdateSequenceByWindowId.get(windowId) !== sequence
+
   try {
+    if (isStaleCall()) return
     if (ignoreChromeRuntimeEvents.value) return
     if (collapseStrategy.data.value === 'disabled') return
 
-    const tab = await chrome.tabs.get(tabId)
-    if (!tab.groupId) return
+    const tab = await resolveActiveGroupedTab(tabId, windowId)
+    if (!tab) return
+    if (isStaleCall()) return
 
     if (collapseStrategy.data.value === 'collapse_inactive') {
-      const tabGroups = chromeState.tabGroupsByWindowId.value[windowId] || []
+      const tabGroups = await getWindowTabGroups(windowId)
       const activeGroup = tabGroups.find(group => group.id === tab.groupId)
       if (!activeGroup) return
+      if (isStaleCall()) return
 
-      // Only expand if currently collapsed
-      if (activeGroup.collapsed) {
-        await chrome.tabGroups.update(tab.groupId, { collapsed: false })
+      // Enforce desired state directly; Edge can report stale collapsed flags.
+      if (
+        !manualGroupToggleTracker.shouldSkipAutomaticToggle(tab.groupId, false)
+      ) {
+        await updateCollapsedStateWithRetry(
+          tab.groupId,
+          false,
+          windowId,
+          isStaleCall
+        )
       }
 
-      // Only collapse other groups if they're currently expanded
+      // Collapse all non-active groups (except wake-up grace period).
       for (const group of tabGroups) {
-        if (group.id !== tab.groupId && !group.collapsed) {
+        if (isStaleCall()) return
+
+        if (group.id !== tab.groupId) {
+          if (
+            manualGroupToggleTracker.shouldSkipAutomaticToggle(group.id, true)
+          ) {
+            continue
+          }
+
           // Skip collapsing during wake-up grace period
           if (Date.now() - lastWakeTimestamp.value < startupGracePeriod) {
             console.debug('Skipping collapse during wake-up grace period')
             continue
           }
-          await chrome.tabGroups.update(group.id, { collapsed: true })
+          await updateCollapsedStateWithRetry(
+            group.id,
+            true,
+            windowId,
+            isStaleCall
+          )
         }
       }
     }
@@ -77,17 +195,35 @@ async function updateGroupExpansionStatus(tabId: number, windowId: number) {
       error ==
       'Error: Tabs cannot be edited right now (user may be dragging a tab).'
     ) {
-      setTimeout(() => updateGroupExpansionStatus(tabId, windowId), 50)
+      setTimeout(() => updateGroupExpansionStatus(tabId, windowId, sequence), 50)
     } else {
       console.warn('Error updating tab group expansion states:', error)
     }
   }
 }
 
-const debouncedUpdateGroupExpansionStatus = debounce(
-  updateGroupExpansionStatus,
-  100
-)
+function queueGroupExpansionStatusUpdate(tabId: number, windowId: number) {
+  const sequence = (expansionUpdateSequenceByWindowId.get(windowId) ?? 0) + 1
+  expansionUpdateSequenceByWindowId.set(windowId, sequence)
+
+  const existingTimer = expansionDebounceTimersByWindowId.get(windowId)
+  if (typeof existingTimer === 'number') {
+    clearTimeout(existingTimer)
+  }
+
+  const timerId = setTimeout(() => {
+    void updateGroupExpansionStatus(tabId, windowId, sequence)
+  }, 100) as unknown as number
+  expansionDebounceTimersByWindowId.set(windowId, timerId)
+
+  // Run delayed convergence passes because Edge can defer/ignore initial updates.
+  for (const delayMs of expansionConvergenceDelaysMs) {
+    setTimeout(() => {
+      if (expansionUpdateSequenceByWindowId.get(windowId) !== sequence) return
+      void updateGroupExpansionStatus(tabId, windowId, sequence)
+    }, delayMs)
+  }
+}
 // CHANGES END HERE
 
 ignoreChromeRuntimeEvents.value = true
@@ -103,6 +239,7 @@ const chromeState = useChromeState()
 // CHANGES START HERE
 const collapseStrategy = useCollapseStrategy()
 const expandOnUpdate = useExpandOnUpdate()
+const runtimeReadMode = useRuntimeReadMode()
 // CHANGES END HERE
 
 // Augmented group configurations are group configurations with
@@ -282,39 +419,28 @@ async function assignTabsToGroup(
   if (tabs.length === 0) return
 
   const windowId = tabs[0].windowId
+  const runtimeMode = runtimeReadMode.data.value
 
   const tabGroupPredicate = createGroupConfigurationMatcher(group)
+  const preflightTargetTabGroup = await findMatchingTabGroup(
+    windowId,
+    tabGroupPredicate,
+    runtimeMode,
+    {
+      cacheTabGroupsByWindowId: chromeState.tabGroupsByWindowId.value,
+      cacheTabGroups: chromeState.tabGroups.items.value
+    }
+  )
+  const preflightTabGroupId = preflightTargetTabGroup?.id
 
-  // Get existing tab groups that match the configured group
-  const targetTabGroupInSameWindow =
-    chromeState.tabGroupsByWindowId.value[windowId]?.find(tabGroupPredicate)
-  const targetTabGroup =
-    chromeState.tabGroups.items.value.find(tabGroupPredicate)
-
-  // Before attempting a merge: Check whether the source and target windows are compatible to move tabs between them
-  let shouldMerge = false
-  if (group.options.merge) {
-    const sourceWindow = chromeState.windows.items.value.find(
-      window => window.id === windowId
+  if (noRedundantGrouping && preflightTabGroupId) {
+    const allTabsAlreadyInGroup = tabs.every(
+      tab => tab.groupId === preflightTabGroupId
     )
-    const targetWindow = chromeState.windows.items.value.find(
-      window => window.id === targetTabGroup?.windowId
-    )
-    const canMerge = sourceWindow?.incognito === targetWindow?.incognito
-    shouldMerge = canMerge
-  }
-
-  const tabGroup = shouldMerge ? targetTabGroup : targetTabGroupInSameWindow
-  const tabGroupId = tabGroup?.id
-
-  // If noRedundantGrouping is true and all tabs are already in the correct group,
-  // skip the grouping operation to preserve the current expansion state
-  if (noRedundantGrouping && tabGroupId) {
-    const allTabsAlreadyInGroup = tabs.every(tab => tab.groupId === tabGroupId)
     if (allTabsAlreadyInGroup) {
       console.debug(
         'All tabs already in correct group %o (%o / %o), skipping to preserve expansion state',
-        tabGroupId,
+        preflightTabGroupId,
         group.title,
         group.color
       )
@@ -325,7 +451,7 @@ async function assignTabsToGroup(
   console.debug(
     'Assigning %o tabs to group %o (%o / %o)...',
     tabs.length,
-    tabGroupId,
+    preflightTabGroupId,
     group.title,
     group.color
   )
@@ -334,153 +460,273 @@ async function assignTabsToGroup(
   // If the group does not exist, it is created in the process
   const attemptGroupAssignment = async ({ waitable = true } = {}) => {
     const tabIds = tabs.flatMap(tab => tab.id ?? [])
+    if (tabIds.length === 0) return
 
     // We need to query the current tab state because they
     // may have been dragged to a different window
-    const windowId = (await chrome.tabs.get(tabs[0].id!)).windowId
+    const freshestTab = await getFreshTab(tabs[0].id!, runtimeMode, {
+      cacheTabsById: chromeState.tabsById.value
+    })
+    if (!freshestTab) return
 
-    let tabGroupId = shouldMerge
-      ? chromeState.tabGroups.items.value.find(tabGroupPredicate)?.id
-      : chromeState.tabGroupsByWindowId.value[windowId]?.find(tabGroupPredicate)
-          ?.id
+    const updatedWindowId = freshestTab.windowId
 
-    try {
-      if (waitable && groupCreationTracker.isCreating(windowId, group)) {
-        tabGroupId = await groupCreationTracker.getCreationPromise(
-          windowId,
-          group
+    return await runWithGroupMutationLock(updatedWindowId, group, async () => {
+      let tabGroupId: number | undefined
+
+      try {
+        if (waitable && groupCreationTracker.isCreating(updatedWindowId, group)) {
+          tabGroupId = await groupCreationTracker.getCreationPromise(
+            updatedWindowId,
+            group
+          )
+        }
+
+        const targetTabGroupInSameWindow = await findMatchingTabGroup(
+          updatedWindowId,
+          tabGroupPredicate,
+          runtimeMode,
+          {
+            cacheTabGroupsByWindowId: chromeState.tabGroupsByWindowId.value,
+            cacheTabGroups: chromeState.tabGroups.items.value
+          }
         )
-      }
 
-      if (!tabGroupId) {
-        console.debug('Attempt assignment to new group in window %o', windowId)
-        const tabCreationPromise = chrome.tabs.group({
-          tabIds,
-          createProperties: { windowId }
-        })
+        let targetTabGroupAcrossWindows: chrome.tabGroups.TabGroup | undefined
+        if (group.options.merge) {
+          targetTabGroupAcrossWindows = await findMatchingTabGroup(
+            updatedWindowId,
+            tabGroupPredicate,
+            runtimeMode,
+            {
+              includeAllWindows: true,
+              cacheTabGroupsByWindowId: chromeState.tabGroupsByWindowId.value,
+              cacheTabGroups: chromeState.tabGroups.items.value
+            }
+          )
+        }
 
-        groupCreationTracker.queueGroupCreation(
-          windowId,
-          group,
-          tabCreationPromise
-        )
+        const sourceWindow =
+          runtimeMode === 'cache_only'
+            ? chromeState.windows.items.value.find(
+                window => window.id === updatedWindowId
+              )
+            : await chrome.windows.get(updatedWindowId)
 
-        const newGroupId = await tabCreationPromise
+        const targetWindow =
+          runtimeMode === 'cache_only'
+            ? chromeState.windows.items.value.find(
+                window => window.id === targetTabGroupAcrossWindows?.windowId
+              )
+            : targetTabGroupAcrossWindows
+              ? await chrome.windows.get(targetTabGroupAcrossWindows.windowId)
+              : undefined
 
-        await chrome.tabGroups.update(newGroupId, {
-          title: group.title,
-          color: group.color,
-          collapsed: expandOnUpdate.data.value !== 'enabled' // CHANGES: Expand if enabled
-        })
-      } else {
-        // Change focus if tab has moved to another window
-        const currentWindow = await chrome.windows.getCurrent()
-        const currentWindowId = currentWindow?.id
-        const currentTab = (
-          await chrome.tabs.query({ active: true, windowId: currentWindowId })
-        )?.[0]
-        const currentTabId = currentTab?.id
+        const canMergeAcrossWindows =
+          group.options.merge &&
+          Boolean(targetWindow) &&
+          sourceWindow?.incognito === targetWindow?.incognito
 
-        // Check if any of the tabs are not already in this group
-        const tabsNotInGroup = tabs.filter(tab => tab.groupId !== tabGroupId)
+        const sameWindowTarget =
+          targetTabGroupInSameWindow ||
+          (targetTabGroupAcrossWindows?.windowId === updatedWindowId
+            ? targetTabGroupAcrossWindows
+            : undefined)
 
-        if (tabsNotInGroup.length > 0) {
-          console.debug('Attempt assignment to existing group %o', tabGroupId)
-          await chrome.tabs.group({
+        if (!tabGroupId) {
+          tabGroupId = canMergeAcrossWindows
+            ? targetTabGroupAcrossWindows?.id
+            : sameWindowTarget?.id
+        }
+
+        if (!tabGroupId) {
+          console.debug(
+            'Attempt assignment to new group in window %o',
+            updatedWindowId
+          )
+          const tabCreationPromise = chrome.tabs.group({
             tabIds,
-            groupId: tabGroupId
+            createProperties: { windowId: updatedWindowId }
           })
 
-          // If expand on update is enabled, expand the group
-          if (expandOnUpdate.data.value === 'enabled') {
-            try {
-              await chrome.tabGroups.update(tabGroupId, { collapsed: false })
-            } catch (error) {
-              console.warn('Error expanding tab group:', error)
+          groupCreationTracker.queueGroupCreation(
+            updatedWindowId,
+            group,
+            tabCreationPromise
+          )
+
+          tabGroupId = await tabCreationPromise
+
+          manualGroupToggleTracker.recordProgrammaticToggle(
+            tabGroupId,
+            expandOnUpdate.data.value !== 'enabled'
+          )
+          await chrome.tabGroups.update(tabGroupId, {
+            title: group.title,
+            color: group.color,
+            collapsed: expandOnUpdate.data.value !== 'enabled'
+          })
+        } else {
+          const currentWindow = await chrome.windows.getCurrent()
+          const currentWindowId = currentWindow?.id
+          const currentTab = (
+            await chrome.tabs.query({ active: true, windowId: currentWindowId })
+          )?.[0]
+          const currentTabId = currentTab?.id
+
+          const latestTabs = await Promise.all(
+            tabIds.map(tabId =>
+              getFreshTab(tabId, runtimeMode, {
+                cacheTabsById: chromeState.tabsById.value
+              })
+            )
+          )
+          const tabsNotInGroup = latestTabs.filter(
+            (tab): tab is chrome.tabs.Tab =>
+              tab !== undefined && tab.groupId !== tabGroupId
+          )
+
+          if (tabsNotInGroup.length > 0) {
+            console.debug('Attempt assignment to existing group %o', tabGroupId)
+            await chrome.tabs.group({
+              tabIds,
+              groupId: tabGroupId
+            })
+
+            if (expandOnUpdate.data.value === 'enabled') {
+              try {
+                manualGroupToggleTracker.recordProgrammaticToggle(
+                  tabGroupId,
+                  false
+                )
+                await chrome.tabGroups.update(tabGroupId, { collapsed: false })
+              } catch (error) {
+                console.warn('Error expanding tab group:', error)
+              }
+            }
+          } else {
+            console.debug(
+              'All tabs already in group %o, skipping assignment',
+              tabGroupId
+            )
+          }
+
+          if (currentTabId && tabIds.includes(currentTabId)) {
+            const targetWindowId = chromeState.tabGroups.items.value.find(
+              tabGroup => tabGroup.id === tabGroupId
+            )?.windowId
+
+            if (targetWindowId && currentWindowId !== targetWindowId) {
+              chrome.windows.update(targetWindowId, {
+                focused: true
+              })
+              chrome.tabs.update(currentTabId, {
+                active: true
+              })
             }
           }
-        } else {
-          console.debug(
-            'All tabs already in group %o, skipping assignment',
-            tabGroupId
-          )
         }
 
-        if (currentTabId && tabIds.includes(currentTabId)) {
-          const targetWindowId = chromeState.tabGroups.items.value.find(
-            tabGroup => tabGroup.id === tabGroupId
-          )?.windowId
-
-          if (targetWindowId && currentWindowId !== targetWindowId) {
-            chrome.windows.update(targetWindowId, {
-              focused: true
-            })
-            chrome.tabs.update(currentTabId, {
-              active: true
-            })
+        const verificationResult = await verifyAssignment(
+          tabIds,
+          {
+            title: group.title,
+            color: group.color
+          },
+          runtimeMode,
+          {
+            cacheTabsById: chromeState.tabsById.value,
+            cacheTabGroupsByWindowId: chromeState.tabGroupsByWindowId.value,
+            cacheTabGroups: chromeState.tabGroups.items.value,
+            retries: runtimeMode === 'cache_only' ? 0 : 4,
+            delayMs: 30
           }
-        }
-      }
-
-      tabIds.forEach(tabId => draggingTabs.delete(tabId))
-      console.debug('Assignment successful')
-
-      // CHANGES START HERE
-      // Check if any of the tabs we just grouped is active
-      const activeTabPromises = tabIds.map(tabId => chrome.tabs.get(tabId))
-      const groupedTabs = await Promise.all(activeTabPromises)
-      const activeTab = groupedTabs.find(tab => tab.active)
-
-      // If we found an active tab, update group expansion states
-      if (activeTab) {
-        debouncedUpdateGroupExpansionStatus(activeTab.id!, activeTab.windowId)
-      }
-      // CHANGES END HERE
-
-      return tabGroupId
-    } catch (error) {
-      if (
-        error ==
-        'Error: Tabs cannot be edited right now (user may be dragging a tab).'
-      ) {
-        // Checking for this error and polling is the officially
-        // recommended way to handle dragged tabs, see
-        // https://developer.chrome.com/docs/extensions/reference/tabs/#move-the-current-tab-to-the-first-position-when-clicked
-
-        tabIds.forEach(tabId => draggingTabs.add(tabId))
-
-        console.debug(
-          'Tab is being dragged, cannot assign it to a group, poll for dragging to be done...'
         )
-        setTimeout(() => {
-          const result = attemptGroupAssignment({ waitable: false })
 
-          groupCreationTracker.queueGroupCreation(
-            windowId,
-            group,
-            result.then(id => {
-              if (typeof id === 'number') return id
+        if (verificationResult.groupId) {
+          tabGroupId = verificationResult.groupId
+        } else if (!verificationResult.ok) {
+          console.debug(
+            'Assignment verification did not converge for group %o / %o',
+            group.title,
+            group.color
+          )
+        }
 
-              // This error should never surface, it's purely a signal for the group creation tracker
-              throw new Error('Tab group assignment failed')
+        tabIds.forEach(tabId => draggingTabs.delete(tabId))
+        console.debug('Assignment successful')
+
+        const groupedTabs = await Promise.all(
+          tabIds.map(tabId =>
+            getFreshTab(tabId, runtimeMode, {
+              cacheTabsById: chromeState.tabsById.value
             })
           )
-        }, 50)
-      } else {
-        console.warn('Could not group tabs:', error)
+        )
+        const activeTab = groupedTabs.find(
+          (tab): tab is chrome.tabs.Tab => Boolean(tab && tab.active)
+        )
+
+        if (activeTab) {
+          queueGroupExpansionStatusUpdate(activeTab.id!, activeTab.windowId)
+        }
+
+        return tabGroupId
+      } catch (error) {
+        if (
+          error ==
+          'Error: Tabs cannot be edited right now (user may be dragging a tab).'
+        ) {
+          tabIds.forEach(tabId => draggingTabs.add(tabId))
+
+          console.debug(
+            'Tab is being dragged, cannot assign it to a group, poll for dragging to be done...'
+          )
+          setTimeout(() => {
+            const result = attemptGroupAssignment({ waitable: false })
+
+            groupCreationTracker.queueGroupCreation(
+              updatedWindowId,
+              group,
+              result.then(id => {
+                if (typeof id === 'number') return id
+
+                throw new Error('Tab group assignment failed')
+              })
+            )
+          }, 50)
+        } else {
+          console.warn('Could not group tabs:', error)
+        }
       }
-    }
+    })
   }
 
   await attemptGroupAssignment()
 }
 
 async function ungroupAppropriateTabs(tabs: chrome.tabs.Tab[]) {
+  const runtimeMode = runtimeReadMode.data.value
+
   for (const tab of tabs) {
-    if (tab.groupId !== chrome.tabGroups.TAB_GROUP_ID_NONE) {
-      const assignedGroup = chromeState.tabGroups.items.value.find(
-        tabGroup => tabGroup.id === tab.groupId
+    const freshTab = await getFreshTab(tab.id!, runtimeMode, {
+      cacheTabsById: chromeState.tabsById.value
+    })
+    const currentGroupId = freshTab?.groupId ?? tab.groupId
+
+    if (currentGroupId !== chrome.tabGroups.TAB_GROUP_ID_NONE) {
+      let assignedGroup = chromeState.tabGroups.items.value.find(
+        tabGroup => tabGroup.id === currentGroupId
       )
+
+      if (!assignedGroup && runtimeMode !== 'cache_only') {
+        try {
+          assignedGroup = await chrome.tabGroups.get(currentGroupId)
+        } catch {
+          assignedGroup = undefined
+        }
+      }
+
       if (!assignedGroup) continue
 
       for (const groupConfiguration of augmentedGroupConfigurations.value) {
@@ -492,7 +738,7 @@ async function ungroupAppropriateTabs(tabs: chrome.tabs.Tab[]) {
               'Unassigning tab %o (%o) from group %o (%o / %o)...',
               tab.title,
               tab.id,
-              tab.groupId,
+              currentGroupId,
               groupConfiguration.title,
               groupConfiguration.color
             )
@@ -707,6 +953,17 @@ const removedTabGroups = useRefHistory(chromeState.tabGroups.lastRemoved, {
   capacity: 10
 })
 
+watch(chromeState.tabGroups.lastUpdated, tabGroup => {
+  if (!tabGroup) return
+
+  const oldTabGroup = tabGroupsHistory.history.value[0].snapshot.find(
+    stateTabGroup => stateTabGroup.id === tabGroup.id
+  )
+  if (!oldTabGroup || oldTabGroup.collapsed === tabGroup.collapsed) return
+
+  manualGroupToggleTracker.recordObservedToggle(tabGroup.id, tabGroup.collapsed)
+})
+
 // When manually updating a group name/color, sync that back to the configuration
 watch(chromeState.tabGroups.lastUpdated, async tabGroup => {
   if (!tabGroup) return
@@ -814,6 +1071,8 @@ when(groupConfigurations.loaded).then(async () => {
 
   watch(chromeState.tabs.lastUpdated, async (update: TabUpdate | undefined) => {
     if (!update) return
+    const runtimeMode = runtimeReadMode.data.value
+
     if (chromeState.tabs.detachedTabs.value.includes(update.tab.id!)) return
     if (draggingTabs.has(update.tab.id!)) return
 
@@ -830,6 +1089,10 @@ when(groupConfigurations.loaded).then(async () => {
       update.changes.groupId
     ) {
       try {
+        manualGroupToggleTracker.recordProgrammaticToggle(
+          update.changes.groupId,
+          false
+        )
         await chrome.tabGroups.update(update.changes.groupId, {
           collapsed: false
         })
@@ -874,34 +1137,25 @@ when(groupConfigurations.loaded).then(async () => {
         )
 
         if (transientConfig) {
-          if (!transientConfig.options.merge) {
-            // For non-merge rules, we can remove immediately since cross-window groups aren't allowed
+          const hasRemainingGroups = Boolean(
+            await findMatchingTabGroup(
+              removedGroup?.windowId ?? update.tab.windowId!,
+              createGroupConfigurationMatcher(transientConfig),
+              runtimeMode,
+              {
+                includeAllWindows: transientConfig.options.merge,
+                cacheTabGroupsByWindowId: chromeState.tabGroupsByWindowId.value,
+                cacheTabGroups: chromeState.tabGroups.items.value
+              }
+            )
+          )
+
+          if (!hasRemainingGroups) {
             transientGroupConfigurations.value =
               transientGroupConfigurations.value.filter(
                 config => config !== transientConfig
               )
-            console.debug(
-              'Removed transient configuration:',
-              transientConfig.title
-            )
-          } else {
-            // For merge rules, check if any tab groups still exist using this configuration
-            const hasRemainingGroups = chromeState.tabGroups.items.value.some(
-              group =>
-                group.title === transientConfig.title &&
-                group.color === transientConfig.color
-            )
-
-            if (!hasRemainingGroups) {
-              transientGroupConfigurations.value =
-                transientGroupConfigurations.value.filter(
-                  config => config !== transientConfig
-                )
-              console.debug(
-                'Removed transient configuration:',
-                transientConfig.title
-              )
-            }
+            console.debug('Removed transient configuration:', transientConfig.title)
           }
         }
         // CHANGES END HERE
@@ -921,7 +1175,10 @@ when(groupConfigurations.loaded).then(async () => {
     // Fetch current data for tab instead of reusing update.tab
     // as this leads to problems in cases where the user closed a window
     // by moving a tab.
-    const updatedTab = await chrome.tabs.get(update.tab.id!)
+    const updatedTab = await getFreshTab(update.tab.id!, runtimeMode, {
+      cacheTabsById: chromeState.tabsById.value
+    })
+    if (!updatedTab) return
 
     let assignedAny = false
     for (const [group, tabs] of chromeTabsByGroupConfiguration.value) {
@@ -935,7 +1192,7 @@ when(groupConfigurations.loaded).then(async () => {
     // otherwise check if it needs to be removed from its current group
     // because the group is configured as strict.
     if (!assignedAny) {
-      ungroupAppropriateTabs([updatedTab])
+      await ungroupAppropriateTabs([updatedTab])
     }
   })
 })
@@ -943,7 +1200,7 @@ when(groupConfigurations.loaded).then(async () => {
 // CHANGES START HERE
 // Handle tab group expansion/collapse based on active tab
 chrome.tabs.onActivated.addListener(activeInfo => {
-  debouncedUpdateGroupExpansionStatus(activeInfo.tabId, activeInfo.windowId)
+  queueGroupExpansionStatusUpdate(activeInfo.tabId, activeInfo.windowId)
 })
 
 // Handle the case when a tab is moved from one window to another
@@ -955,7 +1212,11 @@ chrome.tabs.onDetached.addListener(async (tabId, detachInfo) => {
       windowId: detachInfo.oldWindowId
     })
 
-    if (tabs.length > 0 && tabs[0].groupId && tabs[0].id !== undefined) {
+    if (
+      tabs.length > 0 &&
+      tabs[0].groupId !== chrome.tabGroups.TAB_GROUP_ID_NONE &&
+      tabs[0].id !== undefined
+    ) {
       // If the active tab belongs to a group, ensure that group is expanded
       console.debug(
         'Tab detached, expanding group of new active tab in original window',
@@ -963,7 +1224,7 @@ chrome.tabs.onDetached.addListener(async (tabId, detachInfo) => {
         tabs[0].groupId,
         detachInfo.oldWindowId
       )
-      debouncedUpdateGroupExpansionStatus(tabs[0].id, detachInfo.oldWindowId)
+      queueGroupExpansionStatusUpdate(tabs[0].id, detachInfo.oldWindowId)
     }
   } catch (error) {
     console.warn('Error handling tab detach event:', error)
