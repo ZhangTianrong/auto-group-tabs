@@ -2,7 +2,7 @@ import { expect, it } from 'vitest'
 import { createManualGroupToggleTracker } from '@/util/manual-group-toggle-tracker'
 
 it('suppresses automatic toggles that would undo a recent manual toggle', () => {
-  let currentTime = 1_000
+  const currentTime = 1_000
   const tracker = createManualGroupToggleTracker({
     now: () => currentTime
   })
@@ -13,7 +13,7 @@ it('suppresses automatic toggles that would undo a recent manual toggle', () => 
 })
 
 it('does not treat extension-initiated toggles as manual overrides', () => {
-  let currentTime = 1_000
+  const currentTime = 1_000
   const tracker = createManualGroupToggleTracker({
     now: () => currentTime
   })
