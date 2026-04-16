@@ -573,18 +573,6 @@ async function assignTabsToGroup(
               tabIds,
               groupId: tabGroupId
             })
-
-            if (expandOnUpdate.data.value === 'enabled') {
-              try {
-                manualGroupToggleTracker.recordProgrammaticToggle(
-                  tabGroupId,
-                  false
-                )
-                await chrome.tabGroups.update(tabGroupId, { collapsed: false })
-              } catch (error) {
-                console.warn('Error expanding tab group:', error)
-              }
-            }
           } else {
             console.debug(
               'All tabs already in group %o, skipping assignment',
