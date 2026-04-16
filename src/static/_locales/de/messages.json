@@ -1,10 +1,10 @@
 {
   "appName": {
-    "message": "Automatische Tab-Gruppierung",
+    "message": "Tab Group Automata",
     "description": "The title of the application, displayed in the web store."
   },
   "appDesc": {
-    "message": "Weise Tabs automatisiert bestimmten Gruppen zu, basierend auf ihrer Adresse.",
+    "message": "Automatisches Gruppieren von Tabs mit Regex-Regeln, Domain-Gruppierung und intelligenter Ein-/Ausklapp-Logik.",
     "description": "The description of the application, displayed in the web store."
   },
   "previewTitle": {

@@ -1,8 +1,8 @@
-# Auto-Group Tabs
+# Tab Group Automata
 
 This repository is a fork of [loilo/auto-group-tabs](https://github.com/loilo/auto-group-tabs), originally created by Florian Reuschel.
 
-It is a Chromium-based browser extension which enables the configuration of tab groups for certain URLs. Navigating to such a URL will automatically add the tab to its configured group (creating the group if it does not exist).
+It is a Chromium-based browser extension for automatic tab grouping with regex rules, domain-based grouping, and smart tab group expand/collapse behavior.
 
 ## Attribution
 
