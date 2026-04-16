@@ -1,0 +1,374 @@
+{
+    "appName": {
+        "message": "Tab Group Automata",
+        "description": "The title of the application, displayed in the web store."
+    },
+    "appDesc": {
+        "message": "使用正则规则、按域名分组以及智能展开/折叠行为自动整理标签页。",
+        "description": "The description of the application, displayed in the web store."
+    },
+    "previewTitle": {
+        "message": "预览",
+        "description": "The title of the preview tab in the edit dialog."
+    },
+    "headlineAdvanced": {
+        "message": "高级设置",
+        "description": "The headline of the advanced settings section in the edit dialog."
+    },
+    "checkboxStrict": {
+        "message": "严格匹配",
+        "description": "The label of the strict checkbox in the edit dialog."
+    },
+    "checkboxStrictDescription": {
+        "message": "如果此分组中的标签页 URL 不再匹配规则，则将其移出该分组。",
+        "description": "The description of the strict checkbox in the edit dialog."
+    },
+    "checkboxMerge": {
+        "message": "合并",
+        "description": "The label of the single window checkbox in the edit dialog."
+    },
+    "checkboxMergeDescription": {
+        "message": "防止在不同窗口中创建该分组的多个实例；如果其他窗口中已存在该分组，则把标签页移动到已有分组中。",
+        "description": "The description of the single window checkbox in the edit dialog."
+    },
+    "noGroupTitle": {
+        "message": "无标题",
+        "description": "A group with an empty title"
+    },
+    "editGroupTooltip": {
+        "message": "编辑分组",
+        "description": "The tooltip for the edit group button"
+    },
+    "newMatcherTooltip": {
+        "message": "添加 URL 规则",
+        "description": "The tooltip for the new matcher button"
+    },
+    "invalidUrlPattern": {
+        "message": "无效的 URL 规则",
+        "description": "Error message for invalid URL pattern"
+    },
+    "matchPatternInfo": {
+        "message": "了解更多 URL 匹配规则",
+        "description": "Match pattern info link"
+    },
+    "buttonDeleteGroup": {
+        "message": "删除分组",
+        "description": "Delete group button label"
+    },
+    "groupDeletedNotice": {
+        "message": "分组已删除",
+        "description": "Snackbar message when group was deleted"
+    },
+    "undo": {
+        "message": "撤销",
+        "description": "Undo button label"
+    },
+    "buttonSave": {
+        "message": "保存",
+        "description": "Save button label"
+    },
+    "buttonCancel": {
+        "message": "取消",
+        "description": "Cancel button label"
+    },
+    "headlineImport": {
+        "message": "导入",
+        "description": "The import headline of the import/export settings dialog."
+    },
+    "headlineExport": {
+        "message": "导出",
+        "description": "The import headline of the import/export settings dialog."
+    },
+    "buttonExport": {
+        "message": "将分组规则保存到文件",
+        "description": "Export button label"
+    },
+    "buttonImport": {
+        "message": "从文件加载分组规则...",
+        "description": "Import button label"
+    },
+    "importFormatError": {
+        "message": "要导入的文件包含无效的分组规则。",
+        "description": "Error message when imported file is not valid JSON or does not match the schema"
+    },
+    "importDiscardWarning": {
+        "message": "现有分组规则将被丢弃。",
+        "description": "Warning message when importing settings"
+    },
+    "importSuccess": {
+        "message": "导入成功完成",
+        "description": "Snackbar message when importing succeeded"
+    },
+    "buttonSortMode": {
+        "message": "启用排序模式",
+        "description": "Sort mode"
+    },
+    "buttonSettings": {
+        "message": "设置",
+        "description": "General settings"
+    },
+    "buttonAddGroup": {
+        "message": "添加分组",
+        "description": "Add group button label"
+    },
+    "groupTitlePlaceholder": {
+        "message": "分组标题",
+        "description": "Placeholder of a group title input"
+    },
+    "urlInputPlaceholder": {
+        "message": "URL 规则",
+        "description": "Placeholder of a URL input"
+    },
+    "furtherUrlInputPlaceholder": {
+        "message": "另一个 URL 规则",
+        "description": "Placeholder of URL input beyond the first one"
+    },
+    "newGroupTitle": {
+        "message": "新建分组",
+        "description": "Title of a newly created group"
+    },
+    "duplicateGroupError": {
+        "message": "相同名称和颜色的分组已存在。",
+        "description": "Error message when a group with the same name and color already exists"
+    },
+    "color": {
+        "message": "颜色",
+        "description": "The word 'color'"
+    },
+    "colorGrey": {
+        "message": "灰色",
+        "description": "The color grey"
+    },
+    "colorBlue": {
+        "message": "蓝色",
+        "description": "The color blue"
+    },
+    "colorRed": {
+        "message": "红色",
+        "description": "The color red"
+    },
+    "colorYellow": {
+        "message": "黄色",
+        "description": "The color yellow"
+    },
+    "colorGreen": {
+        "message": "绿色",
+        "description": "The color green"
+    },
+    "colorPink": {
+        "message": "粉色",
+        "description": "The color pink"
+    },
+    "colorPurple": {
+        "message": "紫色",
+        "description": "The color purple"
+    },
+    "colorCyan": {
+        "message": "青色",
+        "description": "The color cyan"
+    },
+    "colorOrange": {
+        "message": "橙色",
+        "description": "The color orange"
+    },
+    "sortHint": {
+        "message": "分组顺序决定了规则的匹配顺序。请将更具体的规则放在前面，以便更宽泛的规则作为后备。",
+        "description": "Hint to show when sort mode is enabled"
+    },
+    "settingsTitle": {
+        "message": "设置",
+        "description": "Name of the settings area"
+    },
+    "settingsTransferConfigurationTitle": {
+        "message": "迁移配置",
+        "description": "Title of the transfer configuration section"
+    },
+    "settingsTransferConfigurationSubtitle": {
+        "message": "导入和导出分组规则",
+        "description": "Subtitle of the transfer configuration section"
+    },
+    "settingsForceReloadTitle": {
+        "message": "强制重新加载扩展",
+        "description": "Title of the force reload section"
+    },
+    "settingsForceReloadSubtitle": {
+        "message": "如果扩展看起来卡住了，或者规则变更没有正确生效，可以尝试此操作。",
+        "description": "Subtitle of the force reload section"
+    },
+    "settingsReassignTitle": {
+        "message": "重新分配",
+        "description": "Name of the reassign section"
+    },
+    "suggestionTitle": {
+        "message": "建议",
+        "description": "Suggestions title for matcher patterns"
+    },
+    "derivedNameChromePage": {
+        "message": "Chrome 页面",
+        "description": "Description of a generic Chrome-specific page"
+    },
+    "derivedNameChromeSettings": {
+        "message": "Chrome 设置",
+        "description": "Description of the Chrome Settings page"
+    },
+    "derivedNameChromeSettingsSection": {
+        "message": "这个 Chrome 设置页面部分",
+        "description": "Description of a Chrome Settings section page"
+    },
+    "derivedNameChromeExtensions": {
+        "message": "Chrome 扩展程序",
+        "description": "Description of the Chrome Extensions page"
+    },
+    "derivedNameChromeDownloads": {
+        "message": "Chrome 下载内容",
+        "description": "Description of the Chrome Downloads page"
+    },
+    "derivedNameChromeHistory": {
+        "message": "Chrome 历史记录",
+        "description": "Description of the Chrome History page"
+    },
+    "derivedNameChromeBookmarks": {
+        "message": "Chrome 书签",
+        "description": "Description of the Chrome Bookmarks page"
+    },
+    "derivedNameChromeApps": {
+        "message": "Chrome 应用",
+        "description": "Description of the Chrome Apps page"
+    },
+    "derivedNameChromeFlags": {
+        "message": "Chrome Flags",
+        "description": "Description of the Chrome Flags page"
+    },
+    "derivedNameChromeNewtab": {
+        "message": "Chrome 新标签页",
+        "description": "Description of the Chrome New Tab page"
+    },
+    "derivedNameChromeExactUrl": {
+        "message": "这个精确 URL",
+        "description": "Description of an exactly matching Chrome-specific page"
+    },
+    "derivedNameChromeAll": {
+        "message": "所有 Chrome 专用页面",
+        "description": "Description of all Chrome-specific pages"
+    },
+    "derivedNameExtensionHost": {
+        "message": "这个扩展",
+        "description": "Description of a specific Chrome extension"
+    },
+    "derivedNameExtensionAll": {
+        "message": "所有扩展",
+        "description": "Description of all Chrome-Extension-specific pages"
+    },
+    "derivedNameExtensionExactUrl": {
+        "message": "这个精确扩展 URL",
+        "description": "Description of an exact Chrome extension URL"
+    },
+    "derivedNameFileAll": {
+        "message": "所有文件 URL",
+        "description": "Description of all file:// URLs"
+    },
+    "derivedNameFileDirname": {
+        "message": "\"%s\" 文件夹中的所有文件",
+        "description": "Description of a file:// folder"
+    },
+    "derivedNameFileThisFolder": {
+        "message": "此文件夹中的所有文件",
+        "description": "Description of the current file:// folder"
+    },
+    "derivedNameFileExactFileUrl": {
+        "message": "这个精确文件",
+        "description": "Description of an exact file:// file URL"
+    },
+    "derivedNameFileExactFolderUrl": {
+        "message": "这个精确文件夹",
+        "description": "Description of an exact file:// folder URL"
+    },
+    "derivedNameHttpDomain": {
+        "message": "此域名",
+        "description": "Description of an HTTP domain pattern"
+    },
+    "derivedNameHttpSubdomain": {
+        "message": "此域名及其子域名",
+        "description": "Description of an HTTP domain and subdomain pattern"
+    },
+    "derivedNameGenericExactUrl": {
+        "message": "这个精确 URL",
+        "description": "Description of an exact URL"
+    },
+    "popupHeadline": {
+        "message": "添加分组规则",
+        "description": "Main headline in a popup"
+    },
+    "popupSelectLabel": {
+        "message": "选择分组配置",
+        "description": "Main headline in a popup"
+    },
+    "popupAddLink": {
+        "message": "添加另一个规则",
+        "description": "Add pattern button in a popup"
+    },
+    "popupCreateGroup": {
+        "message": "创建分组",
+        "description": "Create Group item in the popup menu select"
+    },
+    "popupSaveButton": {
+        "message": "保存新规则",
+        "description": "Save button for new URL patterns item in a popup"
+    },
+    "popupSavedMessage": {
+        "message": "规则已保存",
+        "description": "Message when new patterns have been saved in a popup"
+    },
+    "popupMoreOptions": {
+        "message": "更多选项",
+        "description": "Button to go to options page from a popup"
+    },
+    "popupEditCurrentGroup": {
+        "message": "显示以下分组的所有规则：",
+        "description": "Edit existing tab group configuration button from a popup"
+    },
+    "popupAddCurrentGroup": {
+        "message": "为以下分组创建配置：",
+        "description": "Add tab group configuration button from a popup"
+    },
+    "settingsMiscConfigurationTitle": {
+        "message": "其他配置",
+        "description": "Title of the miscellaneous configuration section"
+    },
+    "settingsMiscConfigurationSubtitle": {
+        "message": "配置自动折叠分组和其他设置",
+        "description": "Subtitle of the miscellaneous configuration section"
+    },
+    "settingsCollapseStrategyTitle": {
+        "message": "自动折叠分组",
+        "description": "Title of the collapse strategy setting"
+    },
+    "settingsCollapseStrategySubtitle": {
+        "message": "选择标签分组应如何自动折叠",
+        "description": "Description of the collapse strategy setting"
+    },
+    "settingsCollapseStrategyDisabled": {
+        "message": "禁用",
+        "description": "Option to disable automatic group collapsing"
+    },
+    "settingsCollapseStrategyInactive": {
+        "message": "折叠非活动分组",
+        "description": "Option to collapse inactive groups"
+    },
+    "settingsExpandOnUpdateTitle": {
+        "message": "更新时展开分组",
+        "description": "Title of the expand on update setting"
+    },
+    "settingsExpandOnUpdateSubtitle": {
+        "message": "当标签页加入分组时自动展开该分组",
+        "description": "Description of the expand on update setting"
+    },
+    "settingsExpandOnUpdateDisabled": {
+        "message": "禁用",
+        "description": "Option to disable automatic group expansion"
+    },
+    "settingsExpandOnUpdateEnabled": {
+        "message": "启用",
+        "description": "Option to enable automatic group expansion"
+    }
+}

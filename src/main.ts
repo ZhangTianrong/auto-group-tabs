@@ -26,11 +26,15 @@ import Popup from './Popup.vue'
 import { RawTranslation, Translation } from './util/types'
 import { isExtensionWorker } from './util/helpers'
 
-const language = /^de-?/.test(
-  isExtensionWorker ? chrome.i18n.getUILanguage() : navigator.language
-)
-  ? 'de'
-  : 'en'
+const uiLanguage = isExtensionWorker
+  ? chrome.i18n.getUILanguage()
+  : navigator.language
+
+const language = /^zh(-|_)?(CN|Hans)?/i.test(uiLanguage)
+  ? 'zh_CN'
+  : /^de-?/i.test(uiLanguage)
+    ? 'de'
+    : 'en'
 window.document.documentElement.setAttribute('lang', language)
 
 async function main() {
