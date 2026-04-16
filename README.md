@@ -1,6 +1,12 @@
 # Auto-Group Tabs
 
-This is a Google Chrome extension which enables the configuration of tab groups for certain URLs. Navigating to such a URL will automatically add the tab to its configured group (creating the group if it does not exist).
+This repository is a fork of [loilo/auto-group-tabs](https://github.com/loilo/auto-group-tabs), originally created by Florian Reuschel.
+
+It is a Chromium-based browser extension which enables the configuration of tab groups for certain URLs. Navigating to such a URL will automatically add the tab to its configured group (creating the group if it does not exist).
+
+## Attribution
+
+This fork includes and distributes code from the original project under the MIT license. The upstream copyright notice for Florian Reuschel is preserved in [LICENSE](./LICENSE), and the packaged extension now ships with attribution files in the build output.
 
 ## Development
 
@@ -8,10 +14,10 @@ This project is built with [Vue](https://v3.vuejs.org/) and [Vite](https://vitej
 
 ### Setup
 
-Clone this project:
+Clone this fork:
 
 ```bash
-git clone https://github.com/loilo/auto-group-tabs.git
+git clone https://github.com/ZhangTianrong/auto-group-tabs.git
 ```
 
 Step into the cloned folder and install [npm](https://www.npmjs.com/) dependencies:
@@ -34,12 +40,12 @@ In this mode, Chrome extension APIs accessed during production (e.g. `chrome.i18
 
 > **Note:** You probably want to use the [device toolbar](https://developers.google.com/web/tools/chrome-devtools/device-mode) of Chrome's devtools to give the options page a proper viewport. Chrome's options overlays are (at the time of writing) 400px wide, and I used a height of 600px during development.
 
-### Testing in Chrome
+### Testing in Chromium
 
-To test the extension in Chrome, you'll have to do a production build of it:
+To test the extension in a Chromium-based browser, you'll have to do a production build of it:
 
 ```bash
 npm run build
 ```
 
-This will create a subfolder with the name `extension` inside the project, which can be installed in your Chrome browser.
+This will create a subfolder with the name `extension` inside the project, which can be installed in your browser as an unpacked extension.

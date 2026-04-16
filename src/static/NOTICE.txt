@@ -1,0 +1,7 @@
+This extension is a fork of loilo/auto-group-tabs:
+https://github.com/loilo/auto-group-tabs
+
+Original author: Florian Reuschel
+
+This fork is distributed under the MIT license. See LICENSE.txt for the
+complete license text that applies to the upstream project code included here.
