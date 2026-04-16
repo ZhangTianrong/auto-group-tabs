@@ -15,8 +15,9 @@
         "test:browser": "playwright test",
         "test": "run-s test:ts test:eslint test:unit test:browser",
         "dev": "run-p dev:options dev:background",
-        "build": "run-s build:options build:background post-build",
+        "build": "run-s build:options build:background post-build post-build:locales",
         "post-build": "node scripts/remove-ms-high-contrast.js",
+        "post-build:locales": "node scripts/copy-locales.js",
         "pack": "node pack",
         "deploy": "run-s test build:options build:background pack"
     },
