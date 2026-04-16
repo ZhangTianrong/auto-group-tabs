@@ -18,6 +18,14 @@ declare module '*.vue' {
 }
 
 declare global {
+  namespace chrome.tabs {
+    const SPLIT_VIEW_ID_NONE: number
+
+    interface Tab {
+      splitViewId?: number
+    }
+  }
+
   interface Crypto {
     randomUUID(): string
   }

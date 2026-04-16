@@ -265,47 +265,61 @@ const getColorFromKey = (key: string) => {
   return colors[Math.abs(hash) % colors.length]
 }
 
+function isSplitViewTab(tab: chrome.tabs.Tab) {
+  return (
+    typeof tab.splitViewId === 'number' &&
+    tab.splitViewId !== chrome.tabs.SPLIT_VIEW_ID_NONE
+  )
+}
+
+function resolveEffectiveGroupConfiguration(tab: chrome.tabs.Tab) {
+  const group = getGroupConfigurationForTab(tab)
+
+  if (!group) return
+
+  if (group.title === '%%ignore%%') {
+    console.debug(
+      'Ignored tab %o (%o) due to explicit %%ignore%% configuration',
+      tab.title,
+      tab.id
+    )
+    return
+  }
+
+  if (group.title !== '%%domain%%') {
+    return group
+  }
+
+  const domain = tab.url ? new URL(tab.url).hostname : ''
+  if (!domain) return
+
+  const existingDomainGroup = transientGroupConfigurations.value.find(
+    group => group.title === domain
+  )
+  if (existingDomainGroup) {
+    return existingDomainGroup
+  }
+
+  const domainGroup = {
+    id: domain,
+    title: domain,
+    color: getColorFromKey(domain),
+    matchers: [],
+    options: { strict: true, merge: true }
+  }
+  transientGroupConfigurations.value.push(domainGroup)
+  console.debug('Added transient configuration:', domainGroup.title)
+
+  return domainGroup
+}
+
 const chromeTabsByGroupConfiguration = computed(() => {
   const tabsByGroups = new Map<GroupConfiguration, chrome.tabs.Tab[]>()
   const tabs = chromeState.tabs.items.value
 
   for (const tab of tabs) {
-    let group = getGroupConfigurationForTab(tab)
-
+    const group = resolveEffectiveGroupConfiguration(tab)
     if (!group) continue
-
-    // CHANGES START HERE
-    if (group.title === '%%ignore%%') {
-      // Used with %%domain%% to ignore certain domains
-      console.debug(
-        'Ignored tab %o (%o) due to explicit %%ignore%% configuration',
-        tab.title,
-        tab.id
-      )
-      continue
-    }
-
-    if (group.title === '%%domain%%') {
-      // Automatically group tabs by domain
-      const domain = tab.url ? new URL(tab.url).hostname : ''
-      const domainGroup = transientGroupConfigurations.value.find(
-        group => group.title === domain
-      )
-      if (!domainGroup) {
-        group = {
-          id: domain,
-          title: domain,
-          color: getColorFromKey(domain),
-          matchers: [],
-          options: { strict: true, merge: true }
-        }
-        transientGroupConfigurations.value.push(group)
-        console.debug('Added transient configuration:', group.title)
-      } else if (domain) {
-        group = domainGroup
-      }
-    }
-    // CHANGES END HERE
 
     if (tabsByGroups.has(group)) {
       tabsByGroups.get(group)!.push(tab)
@@ -327,42 +341,8 @@ const chromeTabsByWindowIdAndGroupConfiguration = computed(() =>
       const tabsByGroups = new Map<GroupConfiguration, chrome.tabs.Tab[]>()
 
       for (const tab of tabs) {
-        let group = getGroupConfigurationForTab(tab)
-
+        const group = resolveEffectiveGroupConfiguration(tab)
         if (!group) continue
-
-        // CHANGES START HERE
-        if (group.title === '%%ignore%%') {
-          // Used with %%domain%% to ignore certain domains
-          console.debug(
-            'Ignored tab %o (%o) due to explicit %%ignore%% configuration',
-            tab.title,
-            tab.id
-          )
-          continue
-        }
-
-        if (group.title === '%%domain%%') {
-          // Automatically group tabs by domain
-          const domain = tab.url ? new URL(tab.url).hostname : ''
-          const domainGroup = transientGroupConfigurations.value.find(
-            group => group.title === domain
-          )
-          if (!domainGroup) {
-            group = {
-              id: domain,
-              title: domain,
-              color: getColorFromKey(domain),
-              matchers: [],
-              options: { strict: true, merge: true }
-            }
-            transientGroupConfigurations.value.push(group)
-            console.debug('Added transient configuration:', group.title)
-          } else if (domain) {
-            group = domainGroup
-          }
-        }
-        // CHANGES END HERE
 
         if (tabsByGroups.has(group)) {
           tabsByGroups.get(group)!.push(tab)
@@ -416,6 +396,7 @@ async function assignTabsToGroup(
   group: GroupConfiguration,
   noRedundantGrouping: boolean = false
 ) {
+  tabs = tabs.filter(tab => !isSplitViewTab(tab))
   if (tabs.length === 0) return
 
   const windowId = tabs[0].windowId
@@ -709,6 +690,8 @@ async function ungroupAppropriateTabs(tabs: chrome.tabs.Tab[]) {
   const runtimeMode = runtimeReadMode.data.value
 
   for (const tab of tabs) {
+    if (isSplitViewTab(tab)) continue
+
     const freshTab = await getFreshTab(tab.id!, runtimeMode, {
       cacheTabsById: chromeState.tabsById.value
     })
