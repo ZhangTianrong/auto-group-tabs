@@ -5,7 +5,7 @@ import archiver from 'archiver'
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
-const output = createWriteStream(resolve(__dirname, 'tab-group-automata.zip'))
+const output = createWriteStream(resolve(__dirname, 'tabgroup-automata.zip'))
 const archive = archiver('zip')
 
 output.on('close', () => {

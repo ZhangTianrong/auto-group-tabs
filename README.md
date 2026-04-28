@@ -1,4 +1,4 @@
-# Tab Group Automata
+# TabGroup Automata
 
 This repository is a fork of [loilo/auto-group-tabs](https://github.com/loilo/auto-group-tabs), originally created by Florian Reuschel.
 

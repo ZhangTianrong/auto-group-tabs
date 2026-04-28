@@ -2,7 +2,7 @@ node_modules
 .DS_Store
 *.local
 auto-group-tabs.zip
-tab-group-automata.zip
+tabgroup-automata.zip
 /extension
 playwright-report
 output/

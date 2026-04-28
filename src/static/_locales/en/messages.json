@@ -1,6 +1,6 @@
 {
     "appName": {
-        "message": "Tab Group Automata",
+        "message": "TabGroup Automata",
         "description": "The title of the application, displayed in the web store."
     },
     "appDesc": {
@@ -80,19 +80,19 @@
         "description": "The import headline of the import/export settings dialog."
     },
     "buttonExport": {
-        "message": "Save grouping rules to file",
+        "message": "Save configuration to file",
         "description": "Export button label"
     },
     "buttonImport": {
-        "message": "Load grouping rules from file...",
+        "message": "Load configuration from file...",
         "description": "Import button label"
     },
     "importFormatError": {
-        "message": "The file to be imported contains invalid grouping rules.",
+        "message": "The file to be imported contains invalid configuration.",
         "description": "Error message when imported file is not valid JSON or does not match the schema"
     },
     "importDiscardWarning": {
-        "message": "Preexisting grouping rules will be discarded.",
+        "message": "Preexisting configuration will be discarded.",
         "description": "Warning message when importing settings"
     },
     "importSuccess": {
@@ -184,7 +184,7 @@
         "description": "Title of the transfer configuration section"
     },
     "settingsTransferConfigurationSubtitle": {
-        "message": "Import and export grouping rules",
+        "message": "Import and export grouping rules and settings",
         "description": "Subtitle of the transfer configuration section"
     },
     "settingsForceReloadTitle": {
@@ -370,5 +370,97 @@
     "settingsExpandOnUpdateEnabled": {
         "message": "Enabled",
         "description": "Option to enable automatic group expansion"
+    },
+    "settingsAboutTitle": {
+        "message": "About",
+        "description": "Title of the about section"
+    },
+    "settingsAboutSubtitle": {
+        "message": "Extension info, help, and attributions",
+        "description": "Subtitle of the about section"
+    },
+    "aboutExtensionInfo": {
+        "message": "Extension Information",
+        "description": "Title for extension info section"
+    },
+    "aboutVersion": {
+        "message": "Version:",
+        "description": "Label for version number"
+    },
+    "aboutAuthor": {
+        "message": "Author:",
+        "description": "Label for author name"
+    },
+    "aboutRepository": {
+        "message": "Repository:",
+        "description": "Label for repository link"
+    },
+    "aboutHelpTitle": {
+        "message": "Help & Documentation",
+        "description": "Title for help section"
+    },
+    "aboutRulesExecutionTitle": {
+        "message": "Rules Execution Order",
+        "description": "Title for rules execution order help"
+    },
+    "aboutRulesExecutionText": {
+        "message": "Rules are evaluated from top to bottom. Put more specific patterns at the top so that groups with more permissive patterns can serve as a fallback. You can reorder rules using the sort button on the main settings page.",
+        "description": "Explanation of rules execution order"
+    },
+    "aboutSpecialRulesTitle": {
+        "message": "Special Rules",
+        "description": "Title for special rules help"
+    },
+    "aboutSpecialRuleIgnore": {
+        "message": "Prevents tabs from being automatically grouped. Tabs matching this pattern will remain ungrouped.",
+        "description": "Explanation of %%ignore%% special rule"
+    },
+    "aboutSpecialRuleDomain": {
+        "message": "Automatically groups tabs by their domain name. Each domain gets its own group.",
+        "description": "Explanation of %%domain%% special rule"
+    },
+    "aboutMiscConfigTitle": {
+        "message": "Miscellaneous Settings",
+        "description": "Title for misc config help"
+    },
+    "aboutMiscConfigText": {
+        "message": "The Misc Configuration section allows you to control automatic group collapsing behavior and whether groups expand when new tabs are added to them.",
+        "description": "Explanation of misc configuration settings"
+    },
+    "aboutRelatedExtensionTitle": {
+        "message": "Related Extension",
+        "description": "Title for related extension section"
+    },
+    "aboutRelatedExtensionText": {
+        "message": "For better tab group management, check out this companion extension that adds keyboard shortcuts for tab groups:",
+        "description": "Introduction to related extension"
+    },
+    "aboutRelatedExtensionName": {
+        "message": "TabGroup Keyboard Shortcut:",
+        "description": "Name label for related extension"
+    },
+    "aboutAttributionTitle": {
+        "message": "Attribution & Acknowledgments",
+        "description": "Title for attribution section"
+    },
+    "aboutUpstreamRepoTitle": {
+        "message": "Upstream Repository",
+        "description": "Title for upstream repo info"
+    },
+    "aboutUpstreamRepoText": {
+        "message": "This extension is a fork of the original Auto Group Tabs extension by Florian Reuschel. We are grateful for the excellent foundation provided by the upstream project.",
+        "description": "Text about upstream repository"
+    },
+    "aboutUpstreamLicense": {
+        "message": "Licensed under MIT License. Copyright (c) 2021 Florian Reuschel.",
+        "description": "Upstream license information"
+    },
+    "aboutIconSourceTitle": {
+        "message": "Icon Source",
+        "description": "Title for icon source info"
+    },
+    "aboutIconSourceText": {
+        "message": "Icons created by Freepik - Flaticon. Tabs icons and Automation icons under Flaticon License.",
+        "description": "Text about icon source and attribution"
     }
 }

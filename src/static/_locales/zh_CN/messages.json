@@ -1,6 +1,6 @@
 {
     "appName": {
-        "message": "Tab Group Automata",
+        "message": "TabGroup Automata",
         "description": "The title of the application, displayed in the web store."
     },
     "appDesc": {
@@ -80,19 +80,19 @@
         "description": "The import headline of the import/export settings dialog."
     },
     "buttonExport": {
-        "message": "将分组规则保存到文件",
+        "message": "将配置保存到文件",
         "description": "Export button label"
     },
     "buttonImport": {
-        "message": "从文件加载分组规则...",
+        "message": "从文件加载配置...",
         "description": "Import button label"
     },
     "importFormatError": {
-        "message": "要导入的文件包含无效的分组规则。",
+        "message": "要导入的文件包含无效的配置。",
         "description": "Error message when imported file is not valid JSON or does not match the schema"
     },
     "importDiscardWarning": {
-        "message": "现有分组规则将被丢弃。",
+        "message": "现有配置将被丢弃。",
         "description": "Warning message when importing settings"
     },
     "importSuccess": {
@@ -184,7 +184,7 @@
         "description": "Title of the transfer configuration section"
     },
     "settingsTransferConfigurationSubtitle": {
-        "message": "导入和导出分组规则",
+        "message": "导入和导出规则及设置",
         "description": "Subtitle of the transfer configuration section"
     },
     "settingsForceReloadTitle": {
@@ -370,5 +370,97 @@
     "settingsExpandOnUpdateEnabled": {
         "message": "启用",
         "description": "Option to enable automatic group expansion"
+    },
+    "settingsAboutTitle": {
+        "message": "关于",
+        "description": "Title of the about section"
+    },
+    "settingsAboutSubtitle": {
+        "message": "扩展信息、帮助和致谢",
+        "description": "Subtitle of the about section"
+    },
+    "aboutExtensionInfo": {
+        "message": "扩展信息",
+        "description": "Title for extension info section"
+    },
+    "aboutVersion": {
+        "message": "版本：",
+        "description": "Label for version number"
+    },
+    "aboutAuthor": {
+        "message": "作者：",
+        "description": "Label for author name"
+    },
+    "aboutRepository": {
+        "message": "仓库：",
+        "description": "Label for repository link"
+    },
+    "aboutHelpTitle": {
+        "message": "帮助与文档",
+        "description": "Title for help section"
+    },
+    "aboutRulesExecutionTitle": {
+        "message": "规则执行顺序",
+        "description": "Title for rules execution order help"
+    },
+    "aboutRulesExecutionText": {
+        "message": "规则从上到下依次评估。将更具体的规则放在顶部，使具有更宽松规则的分组可以作为后备。你可以使用主设置页面上的排序按钮重新排列规则。",
+        "description": "Explanation of rules execution order"
+    },
+    "aboutSpecialRulesTitle": {
+        "message": "特殊规则",
+        "description": "Title for special rules help"
+    },
+    "aboutSpecialRuleIgnore": {
+        "message": "防止标签页被自动分组。匹配此规则的标签页将保持未分组状态。",
+        "description": "Explanation of %%ignore%% special rule"
+    },
+    "aboutSpecialRuleDomain": {
+        "message": "按域名自动分组标签页。每个域名获得自己的分组。",
+        "description": "Explanation of %%domain%% special rule"
+    },
+    "aboutMiscConfigTitle": {
+        "message": "其他配置",
+        "description": "Title for misc config help"
+    },
+    "aboutMiscConfigText": {
+        "message": "其他配置部分允许你控制自动分组折叠行为，以及分组在添加新标签页时是否展开。",
+        "description": "Explanation of misc configuration settings"
+    },
+    "aboutRelatedExtensionTitle": {
+        "message": "相关扩展",
+        "description": "Title for related extension section"
+    },
+    "aboutRelatedExtensionText": {
+        "message": "为了更好地管理标签分组，请查看这个为标签分组添加键盘快捷键的配套扩展：",
+        "description": "Introduction to related extension"
+    },
+    "aboutRelatedExtensionName": {
+        "message": "TabGroup Keyboard Shortcut：",
+        "description": "Name label for related extension"
+    },
+    "aboutAttributionTitle": {
+        "message": "致谢与鸣谢",
+        "description": "Title for attribution section"
+    },
+    "aboutUpstreamRepoTitle": {
+        "message": "上游仓库",
+        "description": "Title for upstream repo info"
+    },
+    "aboutUpstreamRepoText": {
+        "message": "此扩展是 Florian Reuschel 开发的原始 Auto Group Tabs 扩展的分支。我们感谢上游项目提供的优秀基础。",
+        "description": "Text about upstream repository"
+    },
+    "aboutUpstreamLicense": {
+        "message": "基于 MIT 许可证授权。版权所有 (c) 2021 Florian Reuschel。",
+        "description": "Upstream license information"
+    },
+    "aboutIconSourceTitle": {
+        "message": "图标来源",
+        "description": "Title for icon source info"
+    },
+    "aboutIconSourceText": {
+        "message": "图标由 Freepik 创建 - Flaticon。标签页图标和自动化图标使用 Flaticon 许可证。",
+        "description": "Text about icon source and attribution"
     }
 }

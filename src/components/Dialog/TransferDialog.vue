@@ -72,7 +72,9 @@ import { saveGroupConfigurations } from '@/util/group-configurations'
 import { GroupConfigurationSchemas } from '@/util/schemas'
 import { Translation } from '@/util/types'
 import { autoResetRef } from '@vueuse/core'
-// import { getOptions, saveOption } from '@/util/options'
+import { useCollapseStrategy } from '@/composables/use-collapse-strategy'
+import { useExpandOnUpdate } from '@/composables/use-expand-on-update'
+import { z } from 'zod'
 
 const emit = defineEmits<{
   (e: 'close'): void
@@ -81,14 +83,30 @@ const emit = defineEmits<{
 const msg = inject<Translation>('msg')!
 
 const groupConfigurations = useGroupConfigurations()
+const collapseStrategy = useCollapseStrategy()
+const expandOnUpdate = useExpandOnUpdate()
+
+// Schema for the complete export structure
+const ExportDataSchema = z.object({
+  groupConfigurations: GroupConfigurationSchemas,
+  miscSettings: z.object({
+    collapseStrategy: z.enum(['disabled', 'collapse_inactive']),
+    expandOnUpdate: z.enum(['disabled', 'enabled'])
+  })
+})
 
 function exportToFile() {
-  const serializedGroupConfigurations = JSON.stringify(
-    toRawDeep(groupConfigurations.data.value)
-  )
+  const exportData = {
+    groupConfigurations: toRawDeep(groupConfigurations.data.value),
+    miscSettings: {
+      collapseStrategy: collapseStrategy.data.value,
+      expandOnUpdate: expandOnUpdate.data.value
+    }
+  }
+  const serializedData = JSON.stringify(exportData, null, 2)
   const filename = `auto-group-tabs-export--${date('Y-m-d_H:i:s')}.json`
 
-  const blob = new Blob([serializedGroupConfigurations], {
+  const blob = new Blob([serializedData], {
     type: 'application/json'
   })
   const url = URL.createObjectURL(blob)
@@ -129,19 +147,31 @@ async function importFile(file: File) {
     return
   }
 
-  const parsedResult = GroupConfigurationSchemas.safeParse(parsedContent)
-  if (!parsedResult.success) {
-    errorMessage.value = msg.importFormatError
+  // Try parsing as new format (with miscSettings)
+  const newFormatResult = ExportDataSchema.safeParse(parsedContent)
+  if (newFormatResult.success) {
+    groupsCopy.value = newFormatResult.data.groupConfigurations
+    collapseStrategy.data.value = newFormatResult.data.miscSettings.collapseStrategy
+    expandOnUpdate.data.value = newFormatResult.data.miscSettings.expandOnUpdate
+    snackbarRef.value.show()
     importing.value = false
-    console.error(parsedResult.error)
     return
   }
 
-  groupsCopy.value = parsedResult.data
+  // Fall back to old format (just group configurations)
+  const oldFormatResult = GroupConfigurationSchemas.safeParse(parsedContent)
+  if (oldFormatResult.success) {
+    groupsCopy.value = oldFormatResult.data
+    snackbarRef.value.show()
+    importing.value = false
+    return
+  }
 
-  snackbarRef.value.show()
-
+  // Neither format worked
+  errorMessage.value = msg.importFormatError
   importing.value = false
+  console.error('New format error:', newFormatResult.error)
+  console.error('Old format error:', oldFormatResult.error)
 }
 
 const groupsCopy = useSyncedCopy(groupConfigurations.data, () => {

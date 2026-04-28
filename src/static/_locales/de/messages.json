@@ -1,6 +1,6 @@
 {
   "appName": {
-    "message": "Tab Group Automata",
+    "message": "TabGroup Automata",
     "description": "The title of the application, displayed in the web store."
   },
   "appDesc": {
@@ -80,19 +80,19 @@
     "description": "The import headline of the import/export settings dialog."
   },
   "buttonExport": {
-    "message": "Gruppierungsregeln in Datei speichern",
+    "message": "Konfiguration in Datei speichern",
     "description": "Export button label"
   },
   "buttonImport": {
-    "message": "Gruppierungsregeln aus Datei laden...",
+    "message": "Konfiguration aus Datei laden...",
     "description": "Import button label"
   },
   "importFormatError": {
-    "message": "Die zu importierende Datei enthält ungültige Einstellungen.",
+    "message": "Die zu importierende Datei enthält ungültige Konfiguration.",
     "description": "Error message when imported file is not valid JSON or does not match the schema"
   },
   "importDiscardWarning": {
-    "message": "Existierende Regeln werden verworfen.",
+    "message": "Existierende Konfiguration wird verworfen.",
     "description": "Warning message when importing settings"
   },
   "importSuccess": {
@@ -184,7 +184,7 @@
     "description": "Title of the transfer configuration section"
   },
   "settingsTransferConfigurationSubtitle": {
-    "message": "Gruppierungsregeln importieren und exportieren",
+    "message": "Regeln und Einstellungen importieren und exportieren",
     "description": "Subtitle of the transfer configuration section"
   },
   "settingsForceReloadTitle": {
@@ -326,5 +326,137 @@
   "popupAddCurrentGroup": {
     "message": "Konfiguration erstellen für",
     "description": "Add tab group configuration button from a popup"
+  },
+  "settingsMiscConfigurationTitle": {
+    "message": "Verschiedene Einstellungen",
+    "description": "Title of the miscellaneous configuration section"
+  },
+  "settingsMiscConfigurationSubtitle": {
+    "message": "Automatisches Einklappen von Gruppen und andere Einstellungen konfigurieren",
+    "description": "Subtitle of the miscellaneous configuration section"
+  },
+  "settingsCollapseStrategyTitle": {
+    "message": "Automatisches Einklappen von Gruppen",
+    "description": "Title of the collapse strategy setting"
+  },
+  "settingsCollapseStrategySubtitle": {
+    "message": "Wähle, wie Tab-Gruppen automatisch eingeklappt werden sollen",
+    "description": "Description of the collapse strategy setting"
+  },
+  "settingsCollapseStrategyDisabled": {
+    "message": "Deaktiviert",
+    "description": "Option to disable automatic group collapsing"
+  },
+  "settingsCollapseStrategyInactive": {
+    "message": "Inaktive Gruppen einklappen",
+    "description": "Option to collapse inactive groups"
+  },
+  "settingsExpandOnUpdateTitle": {
+    "message": "Gruppen beim Aktualisieren erweitern",
+    "description": "Title of the expand on update setting"
+  },
+  "settingsExpandOnUpdateSubtitle": {
+    "message": "Automatisch eine Tab-Gruppe erweitern, wenn ein Tab hinzugefügt wird",
+    "description": "Description of the expand on update setting"
+  },
+  "settingsExpandOnUpdateDisabled": {
+    "message": "Deaktiviert",
+    "description": "Option to disable automatic group expansion"
+  },
+  "settingsExpandOnUpdateEnabled": {
+    "message": "Aktiviert",
+    "description": "Option to enable automatic group expansion"
+  },
+  "settingsAboutTitle": {
+    "message": "Über",
+    "description": "Title of the about section"
+  },
+  "settingsAboutSubtitle": {
+    "message": "Erweiterungsinformationen, Hilfe und Danksagungen",
+    "description": "Subtitle of the about section"
+  },
+  "aboutExtensionInfo": {
+    "message": "Erweiterungsinformationen",
+    "description": "Title for extension info section"
+  },
+  "aboutVersion": {
+    "message": "Version:",
+    "description": "Label for version number"
+  },
+  "aboutAuthor": {
+    "message": "Autor:",
+    "description": "Label for author name"
+  },
+  "aboutRepository": {
+    "message": "Repository:",
+    "description": "Label for repository link"
+  },
+  "aboutHelpTitle": {
+    "message": "Hilfe & Dokumentation",
+    "description": "Title for help section"
+  },
+  "aboutRulesExecutionTitle": {
+    "message": "Regelausführungsreihenfolge",
+    "description": "Title for rules execution order help"
+  },
+  "aboutRulesExecutionText": {
+    "message": "Regeln werden von oben nach unten ausgewertet. Platziere spezifischere Muster oben, damit Gruppen mit weniger restriktiven Mustern als Fallback dienen können. Du kannst Regeln mit der Sortier-Schaltfläche auf der Haupteinstellungsseite neu anordnen.",
+    "description": "Explanation of rules execution order"
+  },
+  "aboutSpecialRulesTitle": {
+    "message": "Spezielle Regeln",
+    "description": "Title for special rules help"
+  },
+  "aboutSpecialRuleIgnore": {
+    "message": "Verhindert, dass Tabs automatisch gruppiert werden. Tabs, die diesem Muster entsprechen, bleiben ungruppiert.",
+    "description": "Explanation of %%ignore%% special rule"
+  },
+  "aboutSpecialRuleDomain": {
+    "message": "Gruppiert Tabs automatisch nach ihrem Domainnamen. Jede Domain erhält ihre eigene Gruppe.",
+    "description": "Explanation of %%domain%% special rule"
+  },
+  "aboutMiscConfigTitle": {
+    "message": "Verschiedene Einstellungen",
+    "description": "Title for misc config help"
+  },
+  "aboutMiscConfigText": {
+    "message": "Der Bereich 'Verschiedene Einstellungen' ermöglicht es dir, das automatische Einklapp-Verhalten von Gruppen zu steuern und festzulegen, ob Gruppen erweitert werden, wenn neue Tabs hinzugefügt werden.",
+    "description": "Explanation of misc configuration settings"
+  },
+  "aboutRelatedExtensionTitle": {
+    "message": "Verwandte Erweiterung",
+    "description": "Title for related extension section"
+  },
+  "aboutRelatedExtensionText": {
+    "message": "Für bessere Tab-Gruppenverwaltung, schaue dir diese ergänzende Erweiterung an, die Tastaturkürzel für Tab-Gruppen hinzufügt:",
+    "description": "Introduction to related extension"
+  },
+  "aboutRelatedExtensionName": {
+    "message": "TabGroup Keyboard Shortcut:",
+    "description": "Name label for related extension"
+  },
+  "aboutAttributionTitle": {
+    "message": "Danksagungen & Anerkennung",
+    "description": "Title for attribution section"
+  },
+  "aboutUpstreamRepoTitle": {
+    "message": "Upstream-Repository",
+    "description": "Title for upstream repo info"
+  },
+  "aboutUpstreamRepoText": {
+    "message": "Diese Erweiterung ist ein Fork der ursprünglichen Auto Group Tabs-Erweiterung von Florian Reuschel. Wir sind dankbar für die ausgezeichnete Grundlage des Upstream-Projekts.",
+    "description": "Text about upstream repository"
+  },
+  "aboutUpstreamLicense": {
+    "message": "Lizenziert unter MIT-Lizenz. Copyright (c) 2021 Florian Reuschel.",
+    "description": "Upstream license information"
+  },
+  "aboutIconSourceTitle": {
+    "message": "Icon-Quelle",
+    "description": "Title for icon source info"
+  },
+  "aboutIconSourceText": {
+    "message": "Icons erstellt von Freepik - Flaticon. Tabs-Icons und Automatisierungs-Icons unter Flaticon-Lizenz.",
+    "description": "Text about icon source and attribution"
   }
 }

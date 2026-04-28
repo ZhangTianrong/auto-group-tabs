@@ -1,8 +1,8 @@
-# Privacy Policy for Tab Group Automata
+# Privacy Policy for TabGroup Automata
 
 Last updated: 2026-04-15
 
-Tab Group Automata is a Microsoft Edge extension that helps organize tabs into tab groups based on user-defined rules, including regex rules, domain-based grouping, and expand/collapse behavior.
+TabGroup Automata is a Microsoft Edge extension that helps organize tabs into tab groups based on user-defined rules, including regex rules, domain-based grouping, and expand/collapse behavior.
 
 ## What data the extension accesses
 
@@ -24,9 +24,9 @@ The extension uses this information only to provide its tab grouping features in
 
 ## Data sharing
 
-Tab Group Automata does not sell your data.
+TabGroup Automata does not sell your data.
 
-Tab Group Automata does not intentionally transmit your tab data, browsing data, or settings to external servers for analytics, advertising, or profiling.
+TabGroup Automata does not intentionally transmit your tab data, browsing data, or settings to external servers for analytics, advertising, or profiling.
 
 ## Data retention
 

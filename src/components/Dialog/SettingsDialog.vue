@@ -11,7 +11,6 @@
           </template>
         </Text>
       </NavigationCardSection>
-      <!-- CHANGES START HERE -->
       <NavigationCardSection @click="step = 'misc'">
         <Text>
           {{ msg.settingsMiscConfigurationTitle }}
@@ -20,7 +19,6 @@
           </template>
         </Text>
       </NavigationCardSection>
-      <!-- CHANGES END HERE -->
       <NavigationCardSection @click="reloadRuntime()">
         <Text>
           {{ msg.settingsForceReloadTitle }}
@@ -29,13 +27,20 @@
           </template>
         </Text>
       </NavigationCardSection>
+      <NavigationCardSection @click="step = 'about'">
+        <Text>
+          {{ msg.settingsAboutTitle }}
+          <template #secondary>
+            {{ msg.settingsAboutSubtitle }}
+          </template>
+        </Text>
+      </NavigationCardSection>
     </Card>
 
     <transition name="from-right">
       <TransferDialog v-if="step === 'transfer'" @close="step = 'base'" />
-      <!-- CHANGES START HERE -->
       <MiscDialog v-if="step === 'misc'" @close="step = 'base'" />
-      <!-- CHANGES END HERE -->
+      <AboutDialog v-if="step === 'about'" @close="step = 'base'" />
     </transition>
   </OverlayDialog>
 </template>
@@ -49,9 +54,8 @@ import NavigationCardSection from '@/components/Card/NavigationCardSection.vue'
 import Text from '@/components/Text.vue'
 import OverlayDialog from './OverlayDialog.vue'
 import TransferDialog from './TransferDialog.vue'
-// CHANGES START HERE
 import MiscDialog from './MiscDialog.vue'
-// CHANGES END HERE
+import AboutDialog from './AboutDialog.vue'
 
 const emit = defineEmits<{
   (e: 'close'): void
